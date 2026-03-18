@@ -1,0 +1,9 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+sentence-transformers>=2.7.0
+httpx>=0.27.0
+python-dotenv>=1.0.1
+pydantic>=2.7.0
+
+# Endee vector database
+endee>=0.1.0

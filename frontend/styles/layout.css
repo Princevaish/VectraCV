@@ -1,0 +1,164 @@
+/* frontend/styles/layout.css
+   Page structure, grid, sections */
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ── HEADER ──────────────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--bg);
+  border-bottom: 2px solid var(--border-strong);
+  will-change: transform;
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── CONFIG BAR ──────────────────────────────────────────────────── */
+.config-bar {
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.config-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── HERO ────────────────────────────────────────────────────────── */
+.hero {
+  padding: 72px 0 52px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── STEPS BAR ───────────────────────────────────────────────────── */
+.steps-bar {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.steps-bar__inner {
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+/* ── INPUT GRID ──────────────────────────────────────────────────── */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel {
+  padding: 32px 30px;
+  border-right: 1px solid var(--border);
+}
+
+.panel:last-of-type {
+  border-right: none;
+}
+
+/* ── ACTION BAR ──────────────────────────────────────────────────── */
+.action-bar {
+  background: var(--bg-raised);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.action-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* ── ANALYZE SECTION ─────────────────────────────────────────────── */
+.analyze-section {
+  padding: 40px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.analyze-section__header {
+  margin-bottom: 22px;
+}
+
+.question-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+/* ── RESULT AREA ─────────────────────────────────────────────────── */
+.result-area {
+  padding: 36px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 220px;
+}
+
+/* ── HISTORY ─────────────────────────────────────────────────────── */
+.history-section {
+  padding: 32px 0;
+  border-top: 2px solid var(--border-strong);
+}
+
+.history-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+/* ── FOOTER ──────────────────────────────────────────────────────── */
+.footer {
+  border-top: 2px solid var(--border-strong);
+  padding: 24px 0;
+}
+
+.footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer__tech {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .container { padding: 0 16px; }
+  .input-grid { grid-template-columns: 1fr; }
+  .panel { border-right: none; border-bottom: 1px solid var(--border); padding: 22px 16px; }
+  .panel:last-of-type { border-bottom: none; }
+  .question-row { flex-direction: column; }
+  .question-row .btn { width: 100%; justify-content: center; }
+  .footer__inner { flex-direction: column; align-items: flex-start; }
+  .action-bar__inner { gap: 8px; }
+  .header__nav .btn--icon { display: none; }
+}

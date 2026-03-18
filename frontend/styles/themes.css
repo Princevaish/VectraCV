@@ -1,0 +1,78 @@
+/* frontend/styles/themes.css
+   Light and dark theme token definitions */
+
+:root,
+[data-theme="light"] {
+  /* Surfaces */
+  --bg:          #f5f2eb;
+  --bg-raised:   #ede9df;
+  --bg-sunken:   #e8e4d8;
+
+  /* Text */
+  --ink:         #0a0a0f;
+  --ink-muted:   #7a7570;
+  --ink-faint:   #b8b3ab;
+
+  /* Brand */
+  --accent:      #d4522a;
+  --accent-dark: #8c2a10;
+  --accent2:     #2a6dd4;
+  --accent2-dark:#143e80;
+  --success:     #2a8a4a;
+  --error:       #c0392b;
+  --warning:     #d4952a;
+
+  /* Borders */
+  --border:      #d4cfc5;
+  --border-strong: #0a0a0f;
+
+  /* Shadows */
+  --shadow-sm:   3px 3px 0px var(--border);
+  --shadow-md:   4px 4px 0px var(--border);
+  --shadow-ink:  4px 4px 0px var(--ink);
+  --shadow-accent: 4px 4px 0px var(--accent-dark);
+
+  /* Typography */
+  --font-sans:   'Syne', sans-serif;
+  --font-mono:   'DM Mono', monospace;
+  --font-serif:  'Instrument Serif', serif;
+
+  /* Misc */
+  --radius:      4px;
+  --radius-lg:   8px;
+}
+
+[data-theme="dark"] {
+  --bg:          #0d0d12;
+  --bg-raised:   #141419;
+  --bg-sunken:   #1a1a22;
+
+  --ink:         #f0ede6;
+  --ink-muted:   #8a8580;
+  --ink-faint:   #4a4845;
+
+  --accent:      #e8623a;
+  --accent-dark: #c04020;
+  --accent2:     #4a8de8;
+  --accent2-dark:#2a5db8;
+  --success:     #3aaa5a;
+  --error:       #e84040;
+  --warning:     #e8aa3a;
+
+  --border:      #2a2a34;
+  --border-strong: #f0ede6;
+
+  --shadow-sm:   3px 3px 0px #000;
+  --shadow-md:   4px 4px 0px #000;
+  --shadow-ink:  4px 4px 0px var(--ink);
+  --shadow-accent: 4px 4px 0px var(--accent-dark);
+}
+
+/* Theme transition */
+[data-theme] * {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
