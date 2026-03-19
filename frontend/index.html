@@ -1,407 +1,306 @@
-// frontend/scripts/main.js
-
-import { CONFIG }                              from '../config/config.js';
-import { IDS, EVENTS, DEMO_RESUME, DEMO_JOB } from './utils/constants.js';
-import { wordCount, scrollTo, on }             from './utils/helpers.js';
-import { getState, setState, addHistory, clearHistory, toggleTheme } from './state/appState.js';
-import { loadData, analyze, ApiError }         from './api/apiService.js';
-
-import { initClerk, AUTH_EVENTS }              from './auth/clerk.js';
-import {
-  showAuthLoader, hideAuthLoader,
-  renderLoginCard, renderUserPill, clearUserPill,
-  transitionToApp, transitionToAuth,
-} from './auth/authUI.js';
-
-import { showToast }                  from './components/toast.js';
-import { showLoader, hideLoader }     from './components/loader.js';
-import { renderResult, clearResult }  from './components/resultCard.js';
-import { renderHistory }              from './components/history.js';
-import { setStep, bindStepNavigation } from './components/stepManager.js';
-
-import {
-  runPageEntrance, bindScrollRevealAnimations,
-  bindButtonMicroInteractions, bindPillAnimations,
-  animateResultReveal, animateChunkChips,
-  shakeElement, animateStatusMessage,
-} from './animations/gsapAnimations.js';
-import { highlight } from './animations/transitions.js';
-
-/* ── BOOT ─────────────────────────────────────────────────────────────────── */
-
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('[MAIN] DOMContentLoaded — starting boot sequence');
-
-  if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
-
-  // Bind BEFORE initClerk so events aren't missed
-  _bindAuthEvents();
-
-  showAuthLoader();
-
-  try {
-    await initClerk();
-    console.log('[MAIN] initClerk() resolved');
-  } catch (err) {
-    // Should never reach here — clerk.js handles all internal errors and
-    // always emits READY. This is a last-resort safety net.
-    console.error('[MAIN] Unexpected initClerk() rejection:', err);
-    hideAuthLoader();
-    _showAuthScreen();
-    renderLoginCard();
-  }
-});
-
-/* ── AUTH EVENT LISTENERS ────────────────────────────────────────────────── */
-
-function _bindAuthEvents() {
-  console.log('[MAIN] Binding auth event listeners on window');
-
-  window.addEventListener(AUTH_EVENTS.READY, (e) => {
-    console.log('[MAIN] READY received', e.detail);
-    _onClerkReady(e.detail);
-  });
-
-  window.addEventListener(AUTH_EVENTS.SIGNED_IN, (e) => {
-    console.log('[MAIN] SIGNED_IN received', e.detail);
-    _onSignedIn(e.detail);
-  });
-
-  window.addEventListener(AUTH_EVENTS.SIGNED_OUT, () => {
-    console.log('[MAIN] SIGNED_OUT received');
-    _onSignedOut();
-  });
-}
-
-/* ── AUTH STATE HANDLERS ─────────────────────────────────────────────────── */
-
-async function _onClerkReady({ user }) {
-  console.log('[MAIN] _onClerkReady — user:', user);
-
-  hideAuthLoader();
-
-  if (user) {
-    console.log('[MAIN] User already signed in — booting app');
-    await _bootMainApp();
-  } else {
-    console.log('[MAIN] No user — showing login UI');
-    _showAuthScreen();
-    renderLoginCard();
-  }
-}
-
-async function _onSignedIn({ user }) {
-  console.log('[MAIN] _onSignedIn', user);
-  const name = user?.firstName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'there';
-  showToast(`Welcome, ${name}! 👋`, 'success', 4000);
-  await _bootMainApp();
-}
-
-function _onSignedOut() {
-  console.log('[MAIN] _onSignedOut — returning to login');
-  clearUserPill();
-  transitionToAuth();
-  renderLoginCard();
-  setState({ dataLoaded: false, loadStatus: 'idle' });
-  setStep(1);
-  clearResult();
-}
-
-/* ── HELPERS ─────────────────────────────────────────────────────────────── */
-
-function _showAuthScreen() {
-  const el = document.getElementById('authScreen');
-  if (el) {
-    el.style.display = 'flex';
-    console.log('[MAIN] #authScreen set to flex');
-  } else {
-    console.error('[MAIN] #authScreen element NOT FOUND in DOM');
-  }
-}
-
-/* ── MAIN APP BOOT ───────────────────────────────────────────────────────── */
-
-async function _bootMainApp() {
-  console.log('[MAIN] Booting main application');
-
-  transitionToApp();
-  renderUserPill();
-
-  initTheme();
-  initTextareas();
-  initLoadSection();
-  initQuestionPills();
-  initAnalyzeSection();
-  initHistorySection();
-  initStateListener();
-  bindStepNavigation();
-
-  setTimeout(() => {
-    runPageEntrance();
-    bindScrollRevealAnimations();
-    requestAnimationFrame(() => {
-      bindButtonMicroInteractions();
-      bindPillAnimations();
-    });
-  }, 150);
-
-  console.log('[MAIN] App boot complete');
-}
-
-/* ── THEME ───────────────────────────────────────────────────────────────── */
-
-function initTheme() {
-  const btn = document.getElementById(IDS.THEME_BTN);
-  if (!btn) return;
-  const sunIcon  = btn.querySelector('.icon-sun');
-  const moonIcon = btn.querySelector('.icon-moon');
-
-  function syncIcon() {
-    const { theme } = getState();
-    if (sunIcon)  sunIcon.style.display  = theme === 'dark' ? 'none' : '';
-    if (moonIcon) moonIcon.style.display = theme === 'dark' ? ''     : 'none';
-  }
-
-  syncIcon();
-  btn.addEventListener('click', () => {
-    toggleTheme();
-    syncIcon();
-    if (window.gsap) gsap.from(btn, { rotation: 90, duration: 0.4, ease: 'back.out(1.5)' });
-  });
-}
-
-/* ── TEXTAREAS ───────────────────────────────────────────────────────────── */
-
-function initTextareas() {
-  _bindWordCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _bindWordCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
-
-  document.getElementById(IDS.RESUME_CLEAR)?.addEventListener('click', () => {
-    const el = document.getElementById(IDS.RESUME_TEXT);
-    if (el) el.value = '';
-    _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  });
-
-  document.getElementById(IDS.JOB_CLEAR)?.addEventListener('click', () => {
-    const el = document.getElementById(IDS.JOB_TEXT);
-    if (el) el.value = '';
-    _updateCount(IDS.JOB_TEXT, IDS.JOB_COUNT);
-  });
-}
-
-function _bindWordCount(tid, cid) {
-  document.getElementById(tid)?.addEventListener('input', () => _updateCount(tid, cid));
-}
-
-function _updateCount(tid, cid) {
-  const text  = document.getElementById(tid)?.value || '';
-  const count = wordCount(text);
-  const el    = document.getElementById(cid);
-  if (!el) return;
-  el.textContent = `${count} word${count !== 1 ? 's' : ''}`;
-  el.classList.toggle('has-content', count > 0);
-}
-
-/* ── LOAD SECTION ────────────────────────────────────────────────────────── */
-
-function initLoadSection() {
-  document.getElementById(IDS.LOAD_BTN)?.addEventListener('click',  handleLoadData);
-  document.getElementById(IDS.DEMO_BTN)?.addEventListener('click',  fillDemoData);
-  document.getElementById(IDS.CLEAR_ALL)?.addEventListener('click', handleClearAll);
-}
-
-async function handleLoadData() {
-  const resume = document.getElementById(IDS.RESUME_TEXT)?.value.trim() || '';
-  const job    = document.getElementById(IDS.JOB_TEXT)?.value.trim()    || '';
-
-  if (!resume) { shakeElement(document.getElementById(IDS.RESUME_TEXT)); showToast('Please enter your resume text.', 'error'); return; }
-  if (!job)    { shakeElement(document.getElementById(IDS.JOB_TEXT));    showToast('Please enter the job description.', 'error'); return; }
-
-  _setLoadBtnState('loading');
-  _setLoadStatus('', '');
-
-  try {
-    const data = await loadData(resume, job);
-    setState({ dataLoaded: true, loadStatus: 'success', resumeChunks: data.resume_chunks, jobChunks: data.job_chunks });
-    _setLoadStatus(`✓ ${data.resume_chunks + data.job_chunks} chunks stored in Endee`, 'is-success');
-    _renderChunkChips(data.resume_chunks, data.job_chunks);
-    setStep(2);
-    showToast(`Loaded — ${data.resume_chunks} resume + ${data.job_chunks} job chunks`, 'success');
-    setTimeout(() => scrollTo(`#${IDS.ANALYZE_SECTION}`, 80), 300);
-  } catch (err) {
-    const msg = err instanceof ApiError ? err.message : 'Network error — is the backend running?';
-    _setLoadStatus(`✗ ${msg}`, 'is-error');
-    setState({ loadStatus: 'error', error: msg });
-    showToast(`Load failed: ${msg}`, 'error', 6000);
-  } finally {
-    _setLoadBtnState('idle');
-  }
-}
-
-function _setLoadBtnState(state) {
-  const btn = document.getElementById(IDS.LOAD_BTN);
-  if (!btn) return;
-  btn.disabled  = state === 'loading';
-  btn.innerHTML = state === 'loading'
-    ? `<span class="btn-spinner"></span> Loading…`
-    : `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Load into Endee`;
-}
-
-function _setLoadStatus(text, cls) {
-  const el = document.getElementById(IDS.LOAD_STATUS);
-  if (!el) return;
-  el.textContent = text;
-  el.className   = `load-status ${cls}`.trim();
-  if (text) animateStatusMessage(el);
-}
-
-function _renderChunkChips(r, j) {
-  const el = document.getElementById(IDS.CHUNK_CHIPS);
-  if (!el) return;
-  el.innerHTML = `
-    <span class="chunk-chip chunk-chip--resume">${r} resume chunks</span>
-    <span class="chunk-chip chunk-chip--job">${j} job chunks</span>`;
-  animateChunkChips();
-}
-
-function fillDemoData() {
-  const rt = document.getElementById(IDS.RESUME_TEXT);
-  const jt = document.getElementById(IDS.JOB_TEXT);
-  if (rt) rt.value = DEMO_RESUME;
-  if (jt) jt.value = DEMO_JOB;
-  _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _updateCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
-  showToast('Demo data loaded — click "Load into Endee" next.', 'info');
-  if (window.gsap) gsap.from(['#resumePanel', '#jobPanel'], { borderColor: 'var(--accent)', duration: 0.5, stagger: 0.1 });
-}
-
-function handleClearAll() {
-  const rt = document.getElementById(IDS.RESUME_TEXT);
-  const jt = document.getElementById(IDS.JOB_TEXT);
-  if (rt) rt.value = '';
-  if (jt) jt.value = '';
-  _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _updateCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
-  const chips = document.getElementById(IDS.CHUNK_CHIPS);
-  if (chips) chips.innerHTML = '';
-  _setLoadStatus('', '');
-  clearResult();
-  setState({ dataLoaded: false, loadStatus: 'idle' });
-  setStep(1);
-  showToast('Cleared.', 'info', 2000);
-}
-
-/* ── QUESTION PILLS ──────────────────────────────────────────────────────── */
-
-function initQuestionPills() {
-  const container = document.getElementById(IDS.QUESTION_PILLS);
-  if (!container) return;
-
-  container.innerHTML = CONFIG.PRESET_QUESTIONS
-    .map(({ label, q }) => `<button class="pill" data-q="${q}" type="button">${label}</button>`)
-    .join('');
-
-  container.addEventListener('click', e => {
-    const pill = e.target.closest('.pill');
-    if (!pill) return;
-    container.querySelectorAll('.pill').forEach(p => p.classList.remove('is-active'));
-    pill.classList.add('is-active');
-    const qi = document.getElementById(IDS.QUESTION_INPUT);
-    if (qi) qi.value = pill.dataset.q;
-    _clearValidationError();
-  });
-
-  requestAnimationFrame(bindPillAnimations);
-}
-
-/* ── ANALYZE ─────────────────────────────────────────────────────────────── */
-
-function initAnalyzeSection() {
-  document.getElementById(IDS.ANALYZE_BTN)?.addEventListener('click', handleAnalyze);
-  document.getElementById(IDS.QUESTION_INPUT)?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleAnalyze();
-  });
-  document.getElementById(IDS.QUESTION_INPUT)?.addEventListener('input', () => {
-    if (document.getElementById(IDS.QUESTION_INPUT)?.value.trim()) _clearValidationError();
-  });
-}
-
-async function handleAnalyze() {
-  const question = document.getElementById(IDS.QUESTION_INPUT)?.value.trim() || '';
-
-  if (!question) {
-    _showValidationError('Please enter a question or pick one above.');
-    shakeElement(document.getElementById(IDS.QUESTION_INPUT));
-    return;
-  }
-
-  if (!getState().dataLoaded) showToast('Tip: Load your data first for best results.', 'warning', 4000);
-
-  setState({ loading: true, analyzeStatus: 'idle' });
-  _setAnalyzeBtnState('loading');
-  showLoader();
-
-  try {
-    const data = await analyze(question);
-    setState({ loading: false, analyzeStatus: 'success', lastQuestion: data.question, lastAnswer: data.answer, retrievedChunks: data.retrieved_chunks });
-    addHistory({ question: data.question, answer: data.answer, chunks: data.retrieved_chunks });
-    await hideLoader(true);
-    renderResult(data.question, data.answer, data.retrieved_chunks);
-    animateResultReveal();
-    setStep(3);
-    renderHistory();
-    setTimeout(() => scrollTo(`#${IDS.RESULT_AREA}`, 70), 200);
-    showToast('Analysis complete!', 'success');
-  } catch (err) {
-    setState({ loading: false, analyzeStatus: 'error' });
-    const msg = err instanceof ApiError ? err.message : 'Network error — is the backend running?';
-    await hideLoader(false);
-    showToast(`Analysis failed: ${msg}`, 'error', 7000);
-  } finally {
-    _setAnalyzeBtnState('idle');
-  }
-}
-
-function _setAnalyzeBtnState(state) {
-  const btn = document.getElementById(IDS.ANALYZE_BTN);
-  if (!btn) return;
-  btn.disabled  = state === 'loading';
-  btn.innerHTML = state === 'loading'
-    ? `<span class="btn-spinner"></span> Analyzing…`
-    : `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Analyze`;
-}
-
-function _showValidationError(msg) {
-  const el = document.getElementById(IDS.QUESTION_VALID);
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-}
-
-function _clearValidationError() {
-  const el = document.getElementById(IDS.QUESTION_VALID);
-  if (!el) return;
-  el.textContent = '';
-  el.classList.remove('is-visible');
-}
-
-/* ── HISTORY ─────────────────────────────────────────────────────────────── */
-
-function initHistorySection() {
-  document.getElementById(IDS.CLEAR_HISTORY)?.addEventListener('click', () => {
-    clearHistory();
-    renderHistory();
-    showToast('History cleared.', 'info', 2000);
-  });
-}
-
-/* ── STATE LISTENER ──────────────────────────────────────────────────────── */
-
-function initStateListener() {
-  on(EVENTS.STATE_CHANGED, ({ detail }) => {
-    const { changed, next } = detail;
-    if (changed.includes('dataLoaded') && next.dataLoaded) {
-      highlight(document.getElementById(IDS.STEP2));
-    }
-  });
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeRAG — AI Career Intelligence</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
+
+  <!-- Clerk JS (loaded here so window.Clerk exists before main.js runs) -->
+  <!-- Replace the data-clerk-publishable-key value with your own key from https://dashboard.clerk.com -->
+  <!-- If left as placeholder, app runs in DEMO MODE automatically -->
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_c3BsZW5kaWQtc3RpbmdyYXktODkuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://splendid-stingray-89.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/themes.css" />
+  <link rel="stylesheet" href="styles/layout.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+  <link rel="stylesheet" href="styles/auth.css" />
+</head>
+<body data-theme="light">
+
+  <!-- ░░░ GRAIN TEXTURE ░░░ -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ░░░ AUTH BOOT LOADER ░░░
+       Shown while Clerk SDK initializes. Hides once auth state is known. -->
+  <div id="authLoader" class="auth-loader" aria-live="polite" aria-label="Loading authentication">
+    <div class="auth-loader__inner">
+      <div class="auth-loader__ring-wrap">
+        <svg viewBox="0 0 80 80" fill="none" class="auth-loader__ring">
+          <circle cx="40" cy="40" r="34" stroke="var(--border)" stroke-width="3"/>
+          <circle cx="40" cy="40" r="34"
+                  stroke="url(#authArcGrad)" stroke-width="3"
+                  stroke-linecap="round" stroke-dasharray="70 144"
+                  class="auth-loader__arc"/>
+          <defs>
+            <linearGradient id="authArcGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stop-color="var(--accent)"/>
+              <stop offset="100%" stop-color="var(--accent2)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="auth-loader__letter">R</span>
+      </div>
+      <p class="auth-loader__msg" id="authLoaderMsg">Initializing session…</p>
+      <div class="auth-loader__dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░░ AUTH SCREEN ░░░
+       Shown when user is NOT authenticated. Hidden when signed in.
+       CSS default is display:none — JS sets display:flex to reveal. -->
+  <div id="authScreen" class="auth-screen" aria-label="Authentication">
+    <!-- auth card injected here by authUI.renderLoginCard() -->
+  </div>
+
+  <!-- ░░░ MAIN APPLICATION ░░░
+       Hidden until authentication is confirmed. -->
+  <div id="mainApp" style="display:none;">
+
+    <!-- RAG ANALYZE OVERLAY -->
+    <div id="analyzeOverlay" class="overlay" aria-hidden="true" aria-modal="true" role="dialog">
+      <div class="overlay__inner">
+        <div class="overlay__ring-wrap">
+          <svg class="overlay__ring" viewBox="0 0 120 120" fill="none">
+            <circle cx="60" cy="60" r="54" stroke="var(--border)" stroke-width="3"/>
+            <circle class="overlay__arc" cx="60" cy="60" r="54"
+                    stroke="url(#arcGrad)" stroke-width="3"
+                    stroke-linecap="round" stroke-dasharray="100 240"/>
+            <defs>
+              <linearGradient id="arcGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"   stop-color="var(--accent)"/>
+                <stop offset="100%" stop-color="var(--accent2)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="overlay__glow"></div>
+          <div class="overlay__logo">R</div>
+        </div>
+        <p class="overlay__msg" id="overlayMsg">Initializing AI…</p>
+        <p class="overlay__cold" id="overlayCold">Server waking up (cold start)… please wait</p>
+        <div class="overlay__dots">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="overlay__progress-wrap">
+          <div class="overlay__progress-bar" id="overlayProgressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="header" id="header">
+      <div class="container header__inner">
+        <div class="logo">
+          <span class="logo__mark">Resume<em>RAG</em></span>
+          <span class="logo__badge">v2.0</span>
+        </div>
+        <nav class="header__nav" aria-label="Header navigation">
+          <!-- User pill injected here by authUI.renderUserPill() -->
+          <div id="userPillContainer"></div>
+
+          <!-- Theme toggle -->
+          <button class="btn btn--ghost btn--sm btn--icon" id="themeBtn" aria-label="Toggle dark mode">
+            <svg class="icon-sun" width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1 1M10.4 10.4l1 1M2.6 11.4l1-1M10.4 3.6l1-1"
+                    stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            <svg class="icon-moon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:none">
+              <path d="M12 9.3A6 6 0 014.7 2a6 6 0 107.3 7.3z"
+                    stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="hero" aria-labelledby="heroTitle">
+      <div class="container">
+        <p class="hero__eyebrow" id="heroEyebrow">
+          <span class="hero__eyebrow-line"></span>
+          AI · RAG · Endee Vector DB · Groq LLM
+        </p>
+        <h1 class="hero__title" id="heroTitle">
+          Your career intelligence,<br/><em>analysed instantly.</em>
+        </h1>
+        <p class="hero__sub" id="heroSub">
+          Paste your resume and a job description. Ask anything. The RAG pipeline retrieves
+          semantically relevant context from Endee and routes it through Groq for structured,
+          actionable career feedback.
+        </p>
+      </div>
+    </section>
+
+    <!-- STEP BAR -->
+    <nav class="steps-bar" id="stepsBar" aria-label="Progress steps">
+      <div class="container steps-bar__inner">
+        <button class="step active" id="step1" data-step="1" data-target="inputSection" aria-current="step">
+          <span class="step__num">1</span>
+          <span class="step__label">Load Data</span>
+        </button>
+        <span class="step__sep" aria-hidden="true"></span>
+        <button class="step" id="step2" data-step="2" data-target="analyzeSection">
+          <span class="step__num">2</span>
+          <span class="step__label">Analyze</span>
+        </button>
+        <span class="step__sep" aria-hidden="true"></span>
+        <button class="step" id="step3" data-step="3" data-target="resultArea">
+          <span class="step__num">3</span>
+          <span class="step__label">Results</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- INPUT SECTION -->
+    <section id="inputSection" aria-label="Input data">
+      <div class="input-grid">
+        <div class="panel" id="resumePanel">
+          <div class="panel__label">
+            Input 01
+            <span class="panel__tag panel__tag--resume">type: resume</span>
+          </div>
+          <textarea id="resumeText" class="panel__textarea"
+            placeholder="Paste your resume text here…&#10;&#10;Include: work experience, skills, education, projects, certifications."
+            aria-label="Resume text" spellcheck="false"></textarea>
+          <div class="panel__footer">
+            <span class="char-count" id="resumeCount">0 words</span>
+            <button class="panel__clear" id="resumeClear" aria-label="Clear resume" title="Clear">✕</button>
+          </div>
+        </div>
+
+        <div class="panel" id="jobPanel">
+          <div class="panel__label">
+            Input 02
+            <span class="panel__tag panel__tag--job">type: job</span>
+          </div>
+          <textarea id="jobText" class="panel__textarea"
+            placeholder="Paste the job description here…&#10;&#10;Include: requirements, responsibilities, tech stack, company context."
+            aria-label="Job description text" spellcheck="false"></textarea>
+          <div class="panel__footer">
+            <span class="char-count" id="jobCount">0 words</span>
+            <button class="panel__clear" id="jobClear" aria-label="Clear job description" title="Clear">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar" id="loadBar">
+        <div class="container action-bar__inner">
+          <button class="btn btn--accent" id="loadBtn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
+                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Load into Endee
+          </button>
+          <button class="btn btn--ghost btn--sm" id="demoBtn">Fill demo data</button>
+          <button class="btn btn--ghost btn--sm" id="clearAllBtn">Clear all</button>
+          <div class="load-status" id="loadStatus" role="status" aria-live="polite"></div>
+          <div class="chunk-chips" id="chunkChips" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYZE SECTION -->
+    <section class="analyze-section" id="analyzeSection" aria-label="Ask the AI">
+      <div class="container">
+        <div class="analyze-section__header">
+          <h2 class="analyze-section__title">Ask the AI</h2>
+          <p class="analyze-section__desc">
+            Powered by RAG — semantic retrieval from Endee + Groq LLM generation
+          </p>
+        </div>
+        <div class="question-pills" id="questionPills" role="group" aria-label="Preset questions"></div>
+        <div class="question-row">
+          <div class="question-input-wrap">
+            <label class="question-input-wrap__label" for="questionInput">Custom question</label>
+            <input class="question-input" id="questionInput" type="text"
+                   placeholder="e.g. What interview topics should I prepare for?"
+                   aria-label="Custom question" autocomplete="off" />
+            <span class="question-input__validation" id="questionValidation" aria-live="polite"></span>
+          </div>
+          <button class="btn btn--primary" id="analyzeBtn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Analyze
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT AREA -->
+    <div class="result-area" id="resultArea" aria-live="polite" aria-label="Analysis results">
+      <div class="container">
+        <div class="result-empty" id="resultEmpty">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <rect x="8" y="8" width="40" height="40" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16 20h24M16 27h18M16 34h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="41" cy="41" r="9" fill="var(--bg)" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M38 41h6M41 38v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <p>Load your data, then ask a question above.</p>
+        </div>
+        <div id="resultCard"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <section class="history-section" id="historySection" style="display:none;" aria-label="Query history">
+      <div class="container">
+        <div class="history-section__header">
+          <h3 class="history-section__title">
+            Query History
+            <span class="history-section__badge" id="historyCount">0</span>
+          </h3>
+          <button class="btn btn--ghost btn--sm" id="clearHistoryBtn">Clear history</button>
+        </div>
+        <div class="history-list" id="historyList" role="list"></div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" aria-label="Footer">
+      <div class="container footer__inner">
+        <p class="footer__copy">ResumeRAG — AI Career Intelligence</p>
+        <div class="footer__tech" aria-label="Tech stack">
+          <span class="tech-pill">FastAPI</span>
+          <span class="tech-pill">SentenceTransformers</span>
+          <span class="tech-pill">Endee VectorDB</span>
+          <span class="tech-pill">Groq LLM</span>
+          <span class="tech-pill">RAG</span>
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /mainApp -->
+
+  <!-- TOAST CONTAINER (outside mainApp so it shows on auth screen too) -->
+  <div class="toast-container" id="toastContainer"
+       role="region" aria-live="assertive" aria-label="Notifications"></div>
+
+  <!-- ES Module entry -->
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>

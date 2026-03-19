@@ -3,9 +3,9 @@
 // Components read state via getState() and mutate via setState().
 // Every mutation dispatches a STATE_CHANGED event so listeners re-render.
 
-import { emit } from '../utils/helpers.js';
+import { emit, on } from '../utils/helpers.js';
 import { EVENTS } from '../utils/constants.js';
-import Config from '../../config/config.js';
+import { CONFIG } from '../../config/config.js';
 
 /** @typedef {'idle'|'loading'|'success'|'error'} Status */
 
@@ -67,7 +67,7 @@ export function addHistory(entry) {
   const history = [
     { ...entry, time: new Date() },
     ..._state.history,
-  ].slice(0, Config.MAX_HISTORY);
+  ].slice(0, CONFIG.MAX_HISTORY);
 
   setState({ history });
 }
@@ -98,7 +98,6 @@ if (saved === 'dark' || saved === 'light') {
 }
 
 // Persist theme preference
-import { on } from '../utils/helpers.js';
 on(EVENTS.THEME_CHANGED, ({ detail }) => {
   localStorage.setItem('rr-theme', detail.theme);
 });

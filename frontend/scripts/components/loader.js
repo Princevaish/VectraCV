@@ -4,7 +4,7 @@
 
 import { $, sleep } from '../utils/helpers.js';
 import { IDS } from '../utils/constants.js';
-import Config from '../../config/config.js';
+import { CONFIG } from '../../config/config.js';
 
 let _coldStartTimer    = null;
 let _messageInterval   = null;
@@ -57,7 +57,7 @@ export function showLoader() {
 
   // Cycle messages
   _messageInterval = setInterval(() => {
-    _messageIndex = (_messageIndex + 1) % Config.LOADER_MESSAGES.length;
+    _messageIndex = (_messageIndex + 1) % CONFIG.LOADER_MESSAGES.length;
     updateMessage(_messageIndex);
   }, 1800);
 
@@ -67,7 +67,7 @@ export function showLoader() {
     if (window.gsap) {
       gsap.from(coldEl(), { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out' });
     }
-  }, Config.COLD_START_THRESHOLD_MS);
+  }, CONFIG.COLD_START_THRESHOLD_MS);
 
   // Animate progress bar to 90% over ~15s (indeterminate feel)
   animateProgressIndeterminate();
@@ -116,7 +116,7 @@ export async function hideLoader(success = true) {
 
 function updateMessage(index) {
   const el = msgEl();
-  const msg = Config.LOADER_MESSAGES[index];
+  const msg = CONFIG.LOADER_MESSAGES[index];
 
   if (window.gsap) {
     gsap.to(el, {
@@ -133,7 +133,7 @@ function updateMessage(index) {
   }
 
   // Update progress bar to matching step
-  const pct = Config.LOADER_PROGRESS[index] ?? 85;
+  const pct = CONFIG.LOADER_PROGRESS[index] ?? 85;
   progress().style.width = `${pct}%`;
 }
 

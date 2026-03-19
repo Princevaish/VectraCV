@@ -8,10 +8,17 @@
   inset: 0;
   z-index: 8000;
   background: var(--bg);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  pointer-events: none;
+}
+
+/* Active state set by JS: el.style.display = 'flex' */
+.auth-loader.is-visible {
+  display: flex;
+  pointer-events: all;
 }
 
 .auth-loader__inner {
@@ -76,9 +83,10 @@
 .auth-screen {
   position: fixed;
   inset: 0;
-  z-index: 500;
+  z-index: 600;
   background: var(--bg);
-  display: flex;
+  /* Default hidden — JS sets display:flex to reveal */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
