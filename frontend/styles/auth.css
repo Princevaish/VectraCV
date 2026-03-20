@@ -1,24 +1,20 @@
 /* frontend/styles/auth.css
-   Authentication UI styles — matches the brutalist/editorial
-   design language of the main app precisely. */
+   Final polish pass — icon alignment, dark footer, Apple-level spacing.
+   Brutalist identity maintained. */
 
-/* ── AUTH BOOT LOADER ────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   AUTH BOOT LOADER
+═══════════════════════════════════════════════════════════ */
 .auth-loader {
   position: fixed;
   inset: 0;
   z-index: 8000;
   background: var(--bg);
-  display: none;
+  display: none;                   /* JS: el.style.display = 'flex' */
   align-items: center;
   justify-content: center;
   flex-direction: column;
   pointer-events: none;
-}
-
-/* Active state set by JS: el.style.display = 'flex' */
-.auth-loader.is-visible {
-  display: flex;
-  pointer-events: all;
 }
 
 .auth-loader__inner {
@@ -30,14 +26,11 @@
 
 .auth-loader__ring-wrap {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
 }
 
-.auth-loader__ring {
-  width: 80px;
-  height: 80px;
-}
+.auth-loader__ring  { width: 72px; height: 72px; }
 
 .auth-loader__arc {
   transform-origin: 40px 40px;
@@ -52,21 +45,18 @@
   justify-content: center;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   color: var(--ink);
 }
 
 .auth-loader__msg {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--ink-muted);
   letter-spacing: 0.04em;
 }
 
-.auth-loader__dots {
-  display: flex;
-  gap: 7px;
-}
+.auth-loader__dots { display: flex; gap: 7px; }
 
 .auth-loader__dots span {
   width: 6px;
@@ -75,163 +65,529 @@
   background: var(--border);
 }
 
-.auth-loader__dots span:nth-child(1) { animation: dotBounce 1.2s 0.0s ease-in-out infinite; }
-.auth-loader__dots span:nth-child(2) { animation: dotBounce 1.2s 0.2s ease-in-out infinite; }
-.auth-loader__dots span:nth-child(3) { animation: dotBounce 1.2s 0.4s ease-in-out infinite; }
+.auth-loader__dots span:nth-child(1) { animation: dotBounce 1.2s 0.00s ease-in-out infinite; }
+.auth-loader__dots span:nth-child(2) { animation: dotBounce 1.2s 0.20s ease-in-out infinite; }
+.auth-loader__dots span:nth-child(3) { animation: dotBounce 1.2s 0.40s ease-in-out infinite; }
 
-/* ── AUTH SCREEN WRAPPER ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   AUTH SCREEN
+═══════════════════════════════════════════════════════════ */
 .auth-screen {
   position: fixed;
   inset: 0;
-  z-index: 600;
-  background: var(--bg);
-  /* Default hidden — JS sets display:flex to reveal */
-  display: none;
+  z-index: 1000;
+  display: none;                   /* JS: el.style.display = 'flex' */
   align-items: center;
   justify-content: center;
   padding: 20px;
   overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 45%, #f5f2eb 0%, #e8e3d8 100%);
 }
 
-/* decorative rule lines behind the auth screen */
+/* editorial rule lines */
 .auth-screen::before,
 .auth-screen::after {
   content: '';
   position: fixed;
-  left: 0;
-  right: 0;
+  left: 0; right: 0;
   height: 2px;
   background: var(--border-strong);
   pointer-events: none;
+  z-index: 1;
 }
-
 .auth-screen::before { top: 0; }
 .auth-screen::after  { bottom: 0; }
 
-/* ── AUTH CARD ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   AUTH CARD
+═══════════════════════════════════════════════════════════ */
 .auth-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
   background: var(--bg);
   border: 2px solid var(--border-strong);
-  border-radius: var(--radius);
+  border-radius: 10px;           /* slightly softer for Apple feel */
   box-shadow: 8px 8px 0 var(--border-strong);
-  padding: 40px 36px 32px;
+  padding: 30px 28px 24px;
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  overflow: hidden;              /* hard clip for Clerk overflow */
+  box-sizing: border-box;
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* corner accent marks */
+.auth-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 10px 10px 0 var(--border-strong);
+}
+
+/* accent corner ticks */
 .auth-card::before,
 .auth-card::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-color: var(--accent);
   border-style: solid;
+  pointer-events: none;
 }
+.auth-card::before { top: -2px;    left: -2px;  border-width: 2px 0 0 2px; }
+.auth-card::after  { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
 
-.auth-card::before {
-  top: -2px;
-  left: -2px;
-  border-width: 2px 0 0 2px;
-}
-
-.auth-card::after {
-  bottom: -2px;
-  right: -2px;
-  border-width: 0 2px 2px 0;
-}
-
-/* ── CARD BRAND ──────────────────────────────────────────────────── */
-.auth-card__brand {
+/* ── Auth header ──────────────────────────────────────── */
+.auth-header {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-.auth-card__logo {
+.auth-header h1 {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.04em;
   text-transform: uppercase;
   color: var(--ink);
+  margin: 0;
+  line-height: 1;
 }
 
-.auth-card__logo em {
+.auth-header h1 em {
   font-style: normal;
   color: var(--accent);
 }
 
-.auth-card__tagline {
+.auth-sub {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--ink-muted);
+  font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-/* ── CARD HEADER ─────────────────────────────────────────────────── */
-.auth-card__header {
-  margin-bottom: 28px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.auth-card__title {
-  font-family: var(--font-serif);
-  font-size: 2rem;
-  font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-
-.auth-card__title em {
-  font-style: italic;
-  color: var(--accent);
-}
-
-.auth-card__sub {
-  font-family: var(--font-mono);
-  font-size: 0.73rem;
   color: var(--ink-muted);
-  line-height: 1.65;
+  opacity: 0.65;
+  line-height: 1;
 }
 
-/* ── AUTH FORM ───────────────────────────────────────────────────── */
+/* ── Auth body ────────────────────────────────────────── */
+.auth-body {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  /* Apple-level internal spacing */
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLERK ROOT CONTAINMENT
+   Important: do NOT apply max-width:100% to SVG/img
+   children — that breaks icon rendering (the empty box bug).
+═══════════════════════════════════════════════════════════ */
+#clerk-root {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Constrain only layout elements, NOT media/icons */
+#clerk-root div,
+#clerk-root form,
+#clerk-root fieldset,
+#clerk-root section,
+#clerk-root main,
+#clerk-root input,
+#clerk-root button,
+#clerk-root label,
+#clerk-root p,
+#clerk-root span:not([data-clerk-icon]) {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLERK COMPONENT OVERRIDES
+═══════════════════════════════════════════════════════════ */
+
+/* ── Root / card chrome — fully transparent ───────────── */
+.cl-rootBox,
+.cl-card,
+.cl-signIn-root,
+.cl-signUp-root,
+.cl-scrollBox,
+.cl-main,
+.cl-form,
+.cl-internal-b3fm6y {
+  width: 100%        !important;
+  max-width: 100%    !important;
+  background: transparent !important;
+  box-shadow: none   !important;
+  border: none       !important;
+  padding: 0         !important;
+  margin: 0          !important;
+}
+
+/* ── Clerk header text ────────────────────────────────── */
+.cl-headerTitle {
+  font-family:    var(--font-serif) !important;
+  font-size:      1.15rem           !important;
+  font-weight:    400               !important;
+  font-style:     italic            !important;
+  letter-spacing: -0.02em           !important;
+  color:          var(--ink)        !important;
+  margin-bottom:  2px               !important;
+}
+
+.cl-headerSubtitle {
+  font-family: var(--font-mono) !important;
+  font-size:   0.68rem          !important;
+  color:       var(--ink-muted) !important;
+  line-height: 1.5              !important;
+}
+
+/* ── Social buttons — aligned, equal, icon-safe ───────── */
+.cl-socialButtonsBlock {
+  display: flex             !important;
+  flex-direction: row       !important;
+  gap: 12px                 !important;
+  width: 100%               !important;
+  box-sizing: border-box    !important;
+  margin-bottom: 4px        !important;
+}
+
+.cl-socialButtonsBlockButton {
+  /* Equal width flex children */
+  flex: 1 1 0              !important;
+  min-width: 0             !important;
+
+  /* Layout */
+  display: inline-flex     !important;
+  align-items: center      !important;
+  justify-content: center  !important;
+  gap: 8px                 !important;
+  white-space: nowrap      !important;
+
+  /* Sizing */
+  padding: 10px 12px       !important;
+  box-sizing: border-box   !important;
+  height: 42px             !important;
+
+  /* Brutalist look */
+  font-family:    var(--font-sans)         !important;
+  font-size:      0.74rem                  !important;
+  font-weight:    600                      !important;
+  letter-spacing: 0.04em                   !important;
+  color:          var(--ink)               !important;
+  background:     var(--bg)               !important;
+  border:         1.5px solid var(--border-strong) !important;
+  border-radius:  6px                      !important;
+  box-shadow:     3px 3px 0 var(--border-strong) !important;
+
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease !important;
+  cursor: pointer !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background:  var(--bg-raised)              !important;
+  transform:   translate(-1px, -1px)         !important;
+  box-shadow:  4px 4px 0 var(--border-strong) !important;
+}
+
+.cl-socialButtonsBlockButton:active {
+  transform:  translate(1px, 1px)            !important;
+  box-shadow: 1px 1px 0 var(--border-strong) !important;
+}
+
+/* ── Icon inside social buttons — FIXED SIZE ──────────── */
+.cl-socialButtonsBlockButton svg,
+.cl-socialButtonsBlockButton img {
+  /* Explicit dimensions override the max-width:100% nuclear rule */
+  width:      18px !important;
+  height:     18px !important;
+  min-width:  18px !important;
+  max-width:  18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  display:    block !important;
+  flex-shrink: 0   !important;
+  object-fit: contain !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  font-family:  var(--font-sans) !important;
+  font-size:    0.74rem          !important;
+  font-weight:  600              !important;
+  color:        var(--ink)       !important;
+  line-height:  1                !important;
+}
+
+/* ── Divider ──────────────────────────────────────────── */
+.cl-dividerRow {
+  display: flex       !important;
+  align-items: center !important;
+  gap: 10px           !important;
+  width: 100%         !important;
+}
+
+.cl-dividerLine {
+  flex: 1                   !important;
+  height: 1px               !important;
+  background: var(--border) !important;
+}
+
+.cl-dividerText {
+  font-family:    var(--font-mono) !important;
+  font-size:      0.58rem          !important;
+  letter-spacing: 0.09em           !important;
+  text-transform: uppercase        !important;
+  color:          var(--ink-faint) !important;
+  padding:        0 8px            !important;
+  white-space:    nowrap           !important;
+}
+
+/* ── Form labels ──────────────────────────────────────── */
+.cl-formFieldLabel,
+.cl-label {
+  font-family:    var(--font-mono) !important;
+  font-size:      0.6rem           !important;
+  letter-spacing: 0.1em            !important;
+  text-transform: uppercase        !important;
+  color:          var(--ink-muted) !important;
+  margin-bottom:  4px              !important;
+  display:        block            !important;
+}
+
+/* ── Input fields ─────────────────────────────────────── */
+.cl-formFieldInput {
+  width:         100%             !important;
+  max-width:     100%             !important;
+  box-sizing:    border-box       !important;
+  font-family:   var(--font-mono) !important;
+  font-size:     0.85rem          !important;
+  color:         var(--ink)       !important;
+  background:    var(--bg-raised) !important;
+  border:        1.5px solid var(--border) !important;
+  border-radius: 6px              !important;
+  padding:       10px 12px        !important;
+  height:        42px             !important;
+  outline:       none             !important;
+  box-shadow:    none             !important;
+  transition:    border-color 0.18s, box-shadow 0.18s !important;
+  display:       block            !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: var(--border-strong)                          !important;
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--ink) 10%, transparent) !important;
+}
+
+/* ── "Last used" badge ────────────────────────────────── */
+.cl-badge,
+[data-localization-key*="lastUsed"] {
+  font-family:   var(--font-mono) !important;
+  font-size:     0.6rem           !important;
+  color:         var(--ink-muted) !important;
+  background:    var(--bg-raised) !important;
+  border:        1px solid var(--border) !important;
+  border-radius: 3px              !important;
+  padding:       2px 6px          !important;
+}
+
+/* ── Primary CTA — premium gradient ──────────────────── */
+.cl-formButtonPrimary {
+  width:          100%                             !important;
+  max-width:      100%                             !important;
+  box-sizing:     border-box                       !important;
+  display:        flex                             !important;
+  align-items:    center                           !important;
+  justify-content: center                          !important;
+
+  font-family:    var(--font-sans)                 !important;
+  font-size:      0.78rem                          !important;
+  font-weight:    700                              !important;
+  letter-spacing: 0.08em                           !important;
+  text-transform: uppercase                        !important;
+  color:          #fff                             !important;
+
+  background: linear-gradient(180deg, #1a1a1a 0%, #000 100%) !important;
+  border:         none                             !important;
+  border-radius:  8px                              !important;
+  padding:        12px 20px                        !important;
+  height:         46px                             !important;
+
+  box-shadow:     0 4px 14px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0,0,0,0.15) !important;
+  transition:     transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s !important;
+  cursor:         pointer                          !important;
+}
+
+.cl-formButtonPrimary:hover {
+  transform:  translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 2px 5px rgba(0,0,0,0.18) !important;
+}
+
+.cl-formButtonPrimary:active {
+  transform:  translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ── Secondary / ghost buttons ───────────────────────── */
+.cl-formButtonReset,
+.cl-formResendCodeLink {
+  font-family: var(--font-mono) !important;
+  font-size:   0.7rem           !important;
+  color:       var(--ink-muted) !important;
+  background:  transparent      !important;
+  border:      none             !important;
+  cursor:      pointer          !important;
+  transition:  color 0.15s      !important;
+}
+
+.cl-formResendCodeLink:hover,
+.cl-formButtonReset:hover {
+  color: var(--accent) !important;
+}
+
+/* ── Footer — KILL DARK BACKGROUND ───────────────────── */
+.cl-footer,
+.cl-footerAction,
+.cl-footerPages,
+.cl-footerPagesLink,
+[class*="cl-footer"],
+[class*="FooterPages"],
+[class*="footerAction"] {
+  background:       transparent !important;
+  background-color: transparent !important;
+  border:           none        !important;
+  box-shadow:       none        !important;
+}
+
+.cl-footer {
+  padding-top: 8px !important;
+}
+
+.cl-footerActionText,
+.cl-footerAction p,
+.cl-footerAction span {
+  font-family: var(--font-mono) !important;
+  font-size:   0.68rem          !important;
+  color:       var(--ink-muted) !important;
+  opacity:     0.75             !important;
+  background:  transparent      !important;
+}
+
+.cl-footerActionLink {
+  font-family:           var(--font-mono)  !important;
+  font-size:             0.68rem           !important;
+  color:                 var(--ink-muted)  !important;
+  text-decoration:       underline         !important;
+  text-underline-offset: 2px               !important;
+  background:            transparent       !important;
+  transition:            color 0.15s       !important;
+}
+
+.cl-footerActionLink:hover { color: var(--accent) !important; }
+
+/* "Secured by Clerk" + "Development mode" banner */
+.cl-internal-b3fm6y,
+.cl-poweredByClerk,
+[data-localization-key*="clerk"],
+.cl-poweredByClerkText {
+  font-family:      var(--font-mono) !important;
+  font-size:        0.58rem          !important;
+  color:            var(--ink-faint) !important;
+  opacity:          0.5              !important;
+  background:       transparent      !important;
+  background-color: transparent      !important;
+}
+
+/* Development mode badge specifically */
+.cl-developmentMode,
+[class*="developmentMode"],
+[class*="devMode"] {
+  background: transparent       !important;
+  background-color: transparent !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  border-radius: 3px !important;
+  color: var(--accent)          !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.6rem             !important;
+  padding: 2px 8px              !important;
+  opacity: 0.75                 !important;
+}
+
+/* ── OTP code fields inside Clerk ─────────────────────── */
+.cl-otpCodeFieldInput {
+  font-family:   var(--font-mono)  !important;
+  font-size:     1.1rem            !important;
+  text-align:    center            !important;
+  background:    var(--bg-raised)  !important;
+  border:        1.5px solid var(--border) !important;
+  border-radius: 6px               !important;
+  color:         var(--ink)        !important;
+  caret-color:   var(--accent)     !important;
+  box-sizing:    border-box        !important;
+  padding:       8px               !important;
+}
+
+.cl-otpCodeFieldInput:focus {
+  border-color: var(--border-strong) !important;
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  outline:      none !important;
+}
+
+/* ── Alerts ───────────────────────────────────────────── */
+.cl-formFieldErrorText,
+.cl-alertText {
+  font-family: var(--font-mono) !important;
+  font-size:   0.64rem          !important;
+  color:       var(--error)     !important;
+  background:  transparent      !important;
+}
+
+.cl-alert {
+  background:    color-mix(in srgb, var(--error) 8%, transparent) !important;
+  border:        1px solid color-mix(in srgb, var(--error) 25%, transparent) !important;
+  border-radius: 5px !important;
+}
+
+/* ── Clerk internal spinner ───────────────────────────── */
+.cl-spinner { color: var(--accent) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   DEMO FORM (no real Clerk key)
+═══════════════════════════════════════════════════════════ */
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .auth-btn {
   width: 100%;
   justify-content: center;
-  font-size: 0.78rem;
-  padding: 13px 20px;
+  font-size: 0.75rem;
+  padding: 12px 18px;
+  box-sizing: border-box;
 }
 
-.auth-btn--github {
-  gap: 10px;
-  margin-bottom: 20px;
-}
+.auth-btn--github { gap: 9px; margin-bottom: 16px; }
+.auth-btn--email  { margin-top: 12px; gap: 7px; }
 
-.auth-btn--email {
-  margin-top: 14px;
-  gap: 8px;
-}
-
-/* ── DIVIDER ─────────────────────────────────────────────────────── */
 .auth-divider {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .auth-divider__line {
@@ -241,46 +597,48 @@
 }
 
 .auth-divider__text {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.08em;
+  font-family:    var(--font-mono);
+  font-size:      0.58rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-  white-space: nowrap;
+  color:          var(--ink-faint);
+  white-space:    nowrap;
 }
 
-/* ── AUTH FIELD ──────────────────────────────────────────────────── */
 .auth-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  position: relative;
+  gap: 5px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .auth-field__label {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-family:    var(--font-mono);
+  font-size:      0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-muted);
+  color:          var(--ink-muted);
 }
 
 .auth-field__input {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--ink);
-  background: var(--bg-raised);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  width: 100%;
+  font-family:   var(--font-mono);
+  font-size:     0.84rem;
+  color:         var(--ink);
+  background:    var(--bg-raised);
+  border:        1.5px solid var(--border);
+  border-radius: 6px;
+  padding:       10px 12px;
+  outline:       none;
+  width:         100%;
+  height:        42px;
+  box-sizing:    border-box;
+  transition:    border-color 0.18s, box-shadow 0.18s;
 }
 
 .auth-field__input:focus {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-ink);
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .auth-field__input.is-error {
@@ -290,231 +648,203 @@
 
 .auth-field__error {
   font-family: var(--font-mono);
-  font-size: 0.63rem;
-  color: var(--error);
-  min-height: 1em;
+  font-size:   0.61rem;
+  color:       var(--error);
+  min-height:  1em;
 }
 
-/* ── OTP FORM ────────────────────────────────────────────────────── */
 .auth-otp-form {
-  display: flex;
+  display:        flex;
   flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  text-align: center;
+  align-items:    center;
+  gap:            16px;
+  text-align:     center;
+  width:          100%;
+  box-sizing:     border-box;
 }
 
-.auth-otp__header {
-  width: 100%;
-}
+.auth-otp__header { width: 100%; }
 
 .auth-otp__title {
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 6px;
+  font-family:    var(--font-sans);
+  font-size:      0.86rem;
+  font-weight:    700;
+  color:          var(--ink);
+  margin-bottom:  5px;
   letter-spacing: -0.01em;
 }
 
 .auth-otp__sub {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--ink-muted);
+  font-size:   0.69rem;
+  color:       var(--ink-muted);
   line-height: 1.55;
 }
 
-.auth-otp__sub strong {
-  color: var(--ink);
-  font-weight: 500;
-}
+.auth-otp__sub strong { color: var(--ink); font-weight: 500; }
 
-/* OTP input grid */
 .auth-otp__inputs {
-  display: flex;
-  gap: 8px;
+  display:         flex;
+  gap:             7px;
   justify-content: center;
-  width: 100%;
+  width:           100%;
 }
 
 .otp-input {
-  width: 44px;
-  height: 52px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 1.3rem;
-  font-weight: 500;
-  color: var(--ink);
-  background: var(--bg-raised);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  outline: none;
-  caret-color: var(--accent);
-  transition: border-color 0.18s, box-shadow 0.18s, background 0.15s;
+  width:         38px;
+  height:        46px;
+  text-align:    center;
+  font-family:   var(--font-mono);
+  font-size:     1.15rem;
+  font-weight:   500;
+  color:         var(--ink);
+  background:    var(--bg-raised);
+  border:        1.5px solid var(--border);
+  border-radius: 6px;
+  outline:       none;
+  caret-color:   var(--accent);
+  box-sizing:    border-box;
+  transition:    border-color 0.16s, box-shadow 0.16s, background 0.14s;
 }
 
 .otp-input:focus {
   border-color: var(--border-strong);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
-  background: var(--bg);
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  background:   var(--bg);
 }
 
 .otp-input:not(:placeholder-shown):not(:focus) {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+  background:   color-mix(in srgb, var(--accent) 6%, var(--bg));
 }
 
 .auth-otp__back {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--ink-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.15s;
-  align-self: center;
+  font-family:  var(--font-mono);
+  font-size:    0.67rem;
+  color:        var(--ink-muted);
+  background:   none;
+  border:       none;
+  cursor:       pointer;
+  padding:      4px 0;
+  transition:   color 0.14s;
+  align-self:   center;
 }
 
 .auth-otp__back:hover { color: var(--ink); }
 
-/* ── CLERK MOUNT (real Clerk component) ──────────────────────────── */
-.clerk-mount {
-  width: 100%;
-}
-
-/* Override Clerk's injected styles to match our theme */
-.cl-rootBox,
-.cl-card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-  padding: 0 !important;
-  font-family: var(--font-mono) !important;
-}
-
-.cl-formButtonPrimary {
-  background: var(--ink) !important;
-  border: 2px solid var(--ink) !important;
-  border-radius: var(--radius) !important;
-  font-family: var(--font-sans) !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  text-transform: uppercase !important;
-  box-shadow: var(--shadow-ink) !important;
-  transition: transform 0.12s, box-shadow 0.12s !important;
-}
-
-.cl-formButtonPrimary:hover {
-  transform: translate(-2px, -2px) !important;
-  box-shadow: 6px 6px 0 var(--border-strong) !important;
-}
-
-.cl-formFieldInput {
-  font-family: var(--font-mono) !important;
-  background: var(--bg-raised) !important;
-  border: 2px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  color: var(--ink) !important;
-}
-
-.cl-formFieldInput:focus {
-  border-color: var(--border-strong) !important;
-  box-shadow: var(--shadow-ink) !important;
-}
-
-/* ── AUTH FOOTER NOTE ────────────────────────────────────────────── */
 .auth-card__footer-note {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--ink-faint);
-  margin-top: 22px;
-  text-align: center;
+  font-size:   0.59rem;
+  color:       var(--ink-faint);
+  text-align:  center;
   line-height: 1.6;
+  margin-top:  2px;
 }
 
 .auth-link {
-  color: var(--ink-muted);
-  text-decoration: underline;
+  color:                 var(--ink-muted);
+  text-decoration:       underline;
   text-underline-offset: 2px;
-  transition: color 0.15s;
+  transition:            color 0.14s;
 }
 
 .auth-link:hover { color: var(--accent); }
 
-/* ── USER PILL (in header when signed in) ────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   USER PILL (signed-in header state)
+═══════════════════════════════════════════════════════════ */
 .user-pill {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border: 1.5px solid var(--border);
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  border:        1.5px solid var(--border);
   border-radius: 100px;
-  padding: 4px 6px 4px 4px;
-  background: var(--bg-raised);
-  transition: border-color 0.15s;
+  padding:       3px 8px 3px 3px;
+  background:    var(--bg-raised);
+  transition:    border-color 0.14s;
 }
 
-.user-pill:hover {
-  border-color: var(--border-strong);
-}
+.user-pill:hover { border-color: var(--border-strong); }
 
 .user-pill__avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--ink);
-  display: flex;
-  align-items: center;
+  width:           24px;
+  height:          24px;
+  border-radius:   50%;
+  background:      var(--ink);
+  display:         flex;
+  align-items:     center;
   justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
+  overflow:        hidden;
+  flex-shrink:     0;
 }
 
-.user-pill__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.user-pill__img   { width: 100%; height: 100%; object-fit: cover; }
 
 .user-pill__initials {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size:   0.6rem;
   font-weight: 700;
-  color: var(--bg);
+  color:       var(--bg);
   line-height: 1;
 }
 
 .user-pill__email {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--ink-muted);
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
+  font-family:   var(--font-mono);
+  font-size:     0.66rem;
+  color:         var(--ink-muted);
+  max-width:     150px;
+  white-space:   nowrap;
+  overflow:      hidden;
   text-overflow: ellipsis;
 }
 
 .user-pill__logout {
   border-radius: 100px !important;
-  padding: 5px 10px !important;
-  font-size: 0.64rem !important;
-  gap: 5px !important;
+  padding:       4px 9px !important;
+  font-size:     0.62rem !important;
+  gap:           4px !important;
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .auth-card {
-    padding: 28px 20px 24px;
+    padding:    22px 16px 18px;
+    box-shadow: 5px 5px 0 var(--border-strong);
+    gap:        14px;
+  }
+
+  .auth-card:hover {
+    transform:  none;
     box-shadow: 5px 5px 0 var(--border-strong);
   }
 
-  .auth-card__title { font-size: 1.6rem; }
-
-  .otp-input {
-    width: 38px;
-    height: 46px;
-    font-size: 1.1rem;
+  .cl-socialButtonsBlock {
+    flex-direction: column !important;
+    gap: 8px !important;
   }
 
+  .cl-socialButtonsBlockButton {
+    width: 100% !important;
+    flex:  none !important;
+  }
+
+  .otp-input {
+    width:     32px;
+    height:    40px;
+    font-size: 1rem;
+  }
+
+  .auth-otp__inputs { gap: 5px; }
   .user-pill__email { display: none; }
+}
+
+@media (max-width: 360px) {
+  .auth-screen { padding: 10px; }
+
+  .auth-card {
+    padding:    18px 12px 16px;
+    box-shadow: 4px 4px 0 var(--border-strong);
+  }
 }
