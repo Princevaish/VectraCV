@@ -8,8 +8,8 @@ Environment variables consumed:
 """
 
 import httpx
-from backend.config import settings
-from backend.core.logger import get_logger
+from config import settings
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -45,7 +45,7 @@ def generate_response(prompt: str) -> str:
             {
                 "role": "system",
                 "content": (
-                    "You are an expert AI career coach. "
+                    "You are an expert AI career coach for VectraAI Pro. "
                     "Provide structured, actionable, and honest feedback."
                 ),
             },
@@ -88,7 +88,7 @@ def _mock_response(prompt: str, error: str = "") -> str:
     """Return a clearly-labelled mock analysis when the real API is unavailable."""
     note = f"\n\n⚠️  Mock response (API error: {error})" if error else "\n\n⚠️  Mock response (API key not set)"
     return (
-        "## AI Resume Analysis (Mock)\n\n"
+        "## VectraAI Pro — Career Intelligence Analysis\n\n"
         "**1. Match Analysis**\n"
         "Based on the provided resume and job description, the candidate shows "
         "partial alignment with the role requirements. Core technical skills overlap "

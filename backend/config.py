@@ -4,9 +4,13 @@ config.py — Loads environment variables from .env and exposes typed settings.
 
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
 # Load .env file at import time
 load_dotenv()
+
+# Resolve backend root so ChromaDB can persist relative to it
+_BACKEND_ROOT = Path(__file__).parent
 
 
 class Settings:
@@ -14,13 +18,20 @@ class Settings:
 
     # LLM
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "llama3.3-70b-8192")
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "llama3-70b-8192")
 
     # Embeddings
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 
-    # Endee vector database — collection name used across the app
-    ENDEE_COLLECTION: str = "resume_analyzer"
+    # ChromaDB — persistent local vector store
+    CHROMA_PERSIST_DIR: str = os.getenv(
+        "CHROMA_PERSIST_DIR",
+        str(_BACKEND_ROOT / "db" / "chroma"),
+    )
+
+    # Collection names
+    CHROMA_RESUME_COLLECTION: str = "resumes"
+    CHROMA_JOB_COLLECTION: str = "job_descriptions"
 
     # Retrieval
     TOP_K: int = 5

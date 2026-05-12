@@ -1,0 +1,240 @@
+/* frontend/styles/premium-animations.css
+   GSAP-ready animation classes + pure CSS premium effects */
+
+/* ── GSAP Entry States ───────────────────────────────────────────────────────── */
+
+.gsap-fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.gsap-fade-in {
+  opacity: 0;
+}
+
+.gsap-scale-in {
+  opacity: 0;
+  transform: scale(0.88);
+}
+
+.gsap-slide-right {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* ── Glow Pulse ──────────────────────────────────────────────────────────────── */
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3),
+                0 0 40px rgba(var(--accent-rgb), 0.1);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(var(--accent-rgb), 0.5),
+                0 0 70px rgba(var(--accent-rgb), 0.2);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ── Score Ring Glow Colors ──────────────────────────────────────────────────── */
+
+@keyframes ring-glow-red {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.9)); }
+}
+
+@keyframes ring-glow-yellow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(234, 179, 8, 0.6)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(234, 179, 8, 0.9)); }
+}
+
+@keyframes ring-glow-green {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.6)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.9)); }
+}
+
+.ring-glow--bad    { animation: ring-glow-red    2s ease-in-out infinite; }
+.ring-glow--avg    { animation: ring-glow-yellow 2s ease-in-out infinite; }
+.ring-glow--good   { animation: ring-glow-green  2s ease-in-out infinite; }
+
+/* ── Gradient Border Animation ───────────────────────────────────────────────── */
+
+@keyframes gradient-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-border {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3), var(--accent));
+  background-size: 300% 300%;
+  animation: gradient-border 4s ease infinite;
+  padding: 1px;
+  border-radius: var(--radius-lg);
+}
+
+/* ── Float Animation ─────────────────────────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* ── Progress Bar Fill ───────────────────────────────────────────────────────── */
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--glass-border);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: 100px;
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.progress-bar__fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 100%;
+  background: rgba(255,255,255,0.4);
+  border-radius: 100px;
+  filter: blur(4px);
+}
+
+.progress-bar__fill--red    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.progress-bar__fill--yellow { background: linear-gradient(90deg, #eab308, #facc15); }
+.progress-bar__fill--green  { background: linear-gradient(90deg, #10b981, #34d399); }
+.progress-bar__fill--blue   { background: linear-gradient(90deg, #6366f1, #818cf8); }
+.progress-bar__fill--purple { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.progress-bar__fill--accent { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+/* ── Stagger Children ────────────────────────────────────────────────────────── */
+
+.stagger-children > * {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* ── Hover Lift ──────────────────────────────────────────────────────────────── */
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Spin ────────────────────────────────────────────────────────────────────── */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ── Ripple ──────────────────────────────────────────────────────────────────── */
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ── Shimmer Text ────────────────────────────────────────────────────────────── */
+
+@keyframes shimmer-text {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent2) 30%,
+    var(--accent3) 50%,
+    var(--accent2) 70%,
+    var(--accent) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s linear infinite;
+}
+
+/* ── Loading Dots ────────────────────────────────────────────────────────────── */
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%            { transform: scale(1.1); opacity: 1; }
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dot-bounce 1.4s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── ATS Score Number ────────────────────────────────────────────────────────── */
+
+.score-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────────── */
+
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--glass-border);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+}

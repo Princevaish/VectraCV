@@ -1,5 +1,5 @@
 // frontend/scripts/api/apiService.js
-// All HTTP communication with the FastAPI backend.
+// All HTTP communication with the VectraAI Pro FastAPI backend.
 // Uses CONFIG.API_BASE_URL — no runtime DOM reads, no dev UI dependency.
 
 import { CONFIG } from '../../config/config.js';
@@ -56,39 +56,116 @@ async function request(path, opts = {}, retries = CONFIG.MAX_RETRIES) {
   }
 }
 
-/* ── Endpoints ─────────────────────────────────────────────────────────────── */
+/* ── RAG Endpoints ──────────────────────────────────────────────────────────── */
 
 /**
- * POST /load-data
+ * POST /api/load-data — Ingest resume + JD into ChromaDB
  * @param {string} resume
  * @param {string} job_description
  */
 export async function loadData(resume, job_description) {
-  return request('/load-data', {
+  return request('/api/load-data', {
     method: 'POST',
     body: JSON.stringify({ resume, job_description }),
   });
 }
 
 /**
- * POST /analyze
+ * POST /api/analyze — RAG Q&A
  * @param {string} question
  */
 export async function analyze(question) {
-  return request('/analyze', {
+  return request('/api/analyze', {
     method: 'POST',
     body: JSON.stringify({ question }),
   });
 }
 
+/* ── ATS Endpoints ──────────────────────────────────────────────────────────── */
+
 /**
- * GET /health — liveness probe
+ * POST /api/ats-score — Full ATS scoring pipeline
+ * @param {string} resume_text
+ * @param {string} job_description
+ * @returns {Promise<ATSScoreResponse>}
  */
-export async function ping() {
-  return request('/health', { method: 'GET' }, 0);
+export async function getATSScore(resume_text, job_description) {
+  return request('/api/ats-score', {
+    method: 'POST',
+    body: JSON.stringify({ resume_text, job_description }),
+  });
 }
 
-/* ── ApiError ──────────────────────────────────────────────────────────────── */
+/* ── Upload Endpoints ───────────────────────────────────────────────────────── */
+
+/**
+ * POST /api/upload/resume — Upload PDF/DOCX resume
+ * @param {File} file
+ * @returns {Promise<UploadResponse>}
+ */
+export async function uploadResume(file) {
+  return _uploadFile('/api/upload/resume', file);
+}
+
+/**
+ * POST /api/upload/jd — Upload PDF/DOCX job description
+ * @param {File} file
+ * @returns {Promise<UploadResponse>}
+ */
+export async function uploadJD(file) {
+  return _uploadFile('/api/upload/jd', file);
+}
+
+async function _uploadFile(path, file) {
+  const url = `${CONFIG.API_BASE_URL}${path}`;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60_000); // 60s for uploads
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+      // Do NOT set Content-Type — browser sets multipart/form-data with boundary
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const errBody = await res.json();
+        detail = errBody.detail || detail;
+      } catch (_) { /* ignore */ }
+      throw new ApiError(detail, res.status);
+    }
+
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
+/* ── Utility ────────────────────────────────────────────────────────────────── */
+
+/**
+ * GET /api/health — Liveness probe
+ */
+export async function ping() {
+  return request('/api/health', { method: 'GET' }, 0);
+}
+
+/**
+ * GET /api/stats — ChromaDB collection stats
+ */
+export async function getStats() {
+  return request('/api/stats', { method: 'GET' }, 0);
+}
+
+/* ── ApiError ───────────────────────────────────────────────────────────────── */
 
 export class ApiError extends Error {
   constructor(message, status = 0) {

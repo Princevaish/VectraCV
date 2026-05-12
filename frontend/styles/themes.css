@@ -15,12 +15,19 @@
 
   /* Brand */
   --accent:      #d4522a;
+  --accent-rgb:  212, 82, 42;
   --accent-dark: #8c2a10;
   --accent2:     #2a6dd4;
   --accent2-dark:#143e80;
   --success:     #2a8a4a;
   --error:       #c0392b;
   --warning:     #d4952a;
+
+  /* Glass / Surfaces */
+  --glass-bg:      rgba(255, 255, 255, 0.6);
+  --glass-heavy:   rgba(255, 255, 255, 0.85);
+  --glass-subtle:  rgba(255, 255, 255, 0.3);
+  --glass-border:  rgba(0, 0, 0, 0.08);
 
   /* Borders */
   --border:      #d4cfc5;
@@ -39,7 +46,10 @@
 
   /* Misc */
   --radius:      4px;
-  --radius-lg:   8px;
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
 }
 
 [data-theme="dark"] {
@@ -52,12 +62,19 @@
   --ink-faint:   #4a4845;
 
   --accent:      #e8623a;
+  --accent-rgb:  232, 98, 58;
   --accent-dark: #c04020;
   --accent2:     #4a8de8;
   --accent2-dark:#2a5db8;
   --success:     #3aaa5a;
   --error:       #e84040;
   --warning:     #e8aa3a;
+
+  /* Glass / Surfaces */
+  --glass-bg:      rgba(20, 20, 25, 0.6);
+  --glass-heavy:   rgba(20, 20, 25, 0.85);
+  --glass-subtle:  rgba(20, 20, 25, 0.3);
+  --glass-border:  rgba(255, 255, 255, 0.08);
 
   --border:      #2a2a34;
   --border-strong: #f0ede6;

@@ -1,12 +1,14 @@
 """
 services/embedding_service.py — Wraps SentenceTransformer to produce
 fixed-size dense embeddings for arbitrary text.
+
+Model is lazy-loaded once and cached as a module-level singleton.
 """
 
 from typing import List
 from sentence_transformers import SentenceTransformer
-from backend.config import settings
-from backend.core.logger import get_logger
+from config import settings
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -55,3 +57,19 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
     vectors = model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
     logger.debug("Embedded %d text chunks.", len(texts))
     return [v.tolist() for v in vectors]
+
+
+def compute_cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+    """
+    Compute cosine similarity between two embedding vectors.
+
+    Returns:
+        Float in range [-1, 1]. Clipped to [0, 1] for scoring purposes.
+    """
+    import math
+    dot = sum(a * b for a, b in zip(vec_a, vec_b))
+    mag_a = math.sqrt(sum(a * a for a in vec_a))
+    mag_b = math.sqrt(sum(b * b for b in vec_b))
+    if mag_a == 0 or mag_b == 0:
+        return 0.0
+    return dot / (mag_a * mag_b)

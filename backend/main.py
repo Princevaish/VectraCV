@@ -1,11 +1,12 @@
 """
-main.py — Application entry point.
+main.py — VectraAI Pro application entry point.
 
-Boots the FastAPI app, registers the lifespan hook to initialise Endee,
+Boots the FastAPI app, registers the lifespan hook to initialise ChromaDB,
 mounts the API router, and configures CORS + global exception handling.
 
 Run with:
-    uvicorn backend.main:app --reload
+    cd backend
+    uvicorn main:app --reload
 """
 
 from contextlib import asynccontextmanager
@@ -15,9 +16,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.api.routes import router
-from backend.services.vector_service import vector_service
-from backend.core.logger import get_logger
+from api.routes import router
+from services.vector_service import vector_service
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Initialise heavy resources on startup and clean up on shutdown."""
-    logger.info("=== AI Resume Analyser starting up ===")
+    logger.info("=== VectraAI Pro starting up ===")
     vector_service.initialize()
     logger.info("=== Startup complete ===")
     yield
@@ -37,12 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # ── App factory ───────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="AI Resume Analyser",
+    title="VectraAI Pro",
     description=(
-        "Accepts a resume and job description, stores them in Endee vector DB, "
-        "and answers natural-language questions via RAG + Groq LLM."
+        "Production-grade AI Resume Intelligence Platform. "
+        "ATS scoring engine powered by ChromaDB + SentenceTransformers + Groq LLM."
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -73,12 +74,15 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 # ── Router ────────────────────────────────────────────────────────────────────
 
-app.include_router(router, prefix="")
+app.include_router(router)
+
+# Legacy compatibility — mount old /load-data and /analyze at root too
+from api.routes.rag import router as rag_router  # noqa: E402
+app.include_router(rag_router)
 
 
 # ── Dev entry-point ───────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

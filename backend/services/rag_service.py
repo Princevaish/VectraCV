@@ -3,24 +3,24 @@ services/rag_service.py — Retrieval-Augmented Generation pipeline.
 
 Steps:
   1. Embed the user's question.
-  2. Retrieve top-k similar chunks from Endee (resume + job description).
+  2. Retrieve top-k similar chunks from ChromaDB (resume + job description).
   3. Assemble a structured prompt using the retrieved context.
   4. Call the LLM and return the response.
 """
 
 from typing import Dict, Any, List
 
-from backend.services.embedding_service import embed_text
-from backend.services.vector_service import vector_service
-from backend.services.llm_service import generate_response
-from backend.config import settings
-from backend.core.logger import get_logger
+from services.embedding_service import embed_text
+from services.vector_service import vector_service
+from services.llm_service import generate_response
+from config import settings
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 
 # ── Prompt Template ───────────────────────────────────────────────────────────
 
-RAG_PROMPT_TEMPLATE = """You are an AI career assistant.
+RAG_PROMPT_TEMPLATE = """You are an expert AI career coach powered by VectraAI Pro.
 
 Using the following context from a resume and job description:
 
@@ -28,11 +28,11 @@ Using the following context from a resume and job description:
 
 Answer the question: {question}
 
-Provide:
+Provide structured, actionable career intelligence:
 1. Match analysis
-2. Missing skills
-3. Improvement suggestions
-4. Final verdict"""
+2. Missing skills or gaps
+3. Specific improvement suggestions
+4. Final verdict with confidence level"""
 
 
 def run_rag(question: str) -> Dict[str, Any]:
@@ -44,26 +44,26 @@ def run_rag(question: str) -> Dict[str, Any]:
 
     Returns:
         A dict with keys:
-          - ``answer``          (str)   — LLM-generated response.
-          - ``retrieved_chunks`` (int)  — number of context chunks used.
+          - ``answer``           (str) — LLM-generated response.
+          - ``retrieved_chunks`` (int) — number of context chunks used.
     """
     logger.info("RAG pipeline started. Question: %s", question)
 
     # 1. Embed the question
     query_vector = embed_text(question)
 
-    # 2. Retrieve similar chunks from Endee
+    # 2. Retrieve similar chunks from ChromaDB (both collections)
     hits = vector_service.search(
         query_embedding=query_vector,
         top_k=settings.TOP_K,
     )
 
     if not hits:
-        logger.warning("No chunks retrieved from vector store — check /load-data was called.")
+        logger.warning("No chunks retrieved from vector store — check /api/load-data was called.")
         return {
             "answer": (
                 "No resume or job description data found. "
-                "Please POST to /load-data first."
+                "Please load your data first using the Load Data step."
             ),
             "retrieved_chunks": 0,
         }
@@ -75,12 +75,10 @@ def run_rag(question: str) -> Dict[str, Any]:
     for hit in hits:
         chunk_type = hit.get("metadata", {}).get("type", "unknown")
         doc = hit.get("document", "")
-        if chunk_type == "resume":
-            resume_chunks.append(doc)
-        elif chunk_type == "job":
+        if chunk_type == "job":
             job_chunks.append(doc)
         else:
-            resume_chunks.append(doc)  # default bucket
+            resume_chunks.append(doc)  # default to resume
 
     context_parts: List[str] = []
     if resume_chunks:

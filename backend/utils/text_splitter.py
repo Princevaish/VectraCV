@@ -1,12 +1,12 @@
 """
 utils/text_splitter.py — Splits long text into overlapping word-level chunks.
 
-Each chunk is 200-300 words with a small overlap so context is preserved
-across boundaries.
+Each chunk is ~250 words with a small overlap so context is preserved
+across boundaries. Used for ChromaDB embedding storage.
 """
 
 from typing import List
-from backend.core.logger import get_logger
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 

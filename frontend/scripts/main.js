@@ -4,7 +4,7 @@ import { CONFIG }                           from '../config/config.js';
 import { IDS, EVENTS, DEMO_RESUME, DEMO_JOB } from './utils/constants.js';
 import { wordCount, scrollTo, on }            from './utils/helpers.js';
 import { getState, setState, addHistory, clearHistory, toggleTheme } from './state/appState.js';
-import { loadData, analyze, ApiError }        from './api/apiService.js';
+import { loadData, analyze, getATSScore, ApiError }        from './api/apiService.js';
 
 import { initClerk, AUTH_EVENTS, signOut, getUserEmail, getUserName, getUserAvatar } from './auth/clerk.js';
 import { showAuthLoader, hideAuthLoader, renderLoginCard, renderUserPill, clearUserPill, transitionToApp, transitionToAuth } from './auth/authUI.js';
@@ -14,6 +14,7 @@ import { showLoader, hideLoader }     from './components/loader.js';
 import { renderResult, clearResult }  from './components/resultCard.js';
 import { renderHistory }              from './components/history.js';
 import { setStep, bindStepNavigation } from './components/stepManager.js';
+import { renderATSDashboard, clearATSDashboard, showATSLoading } from './components/atsDashboard.js';
 
 import {
   runPageEntrance, bindScrollRevealAnimations,
@@ -72,6 +73,7 @@ function _onSignedOut() {
   setState({ dataLoaded: false, loadStatus: 'idle' });
   setStep(1);
   clearResult();
+  clearATSDashboard();
 }
 
 /* ── HELPERS ──────────────────────────────────────────────────────────────── */
@@ -254,6 +256,7 @@ function handleClearAll() {
   if (chips) chips.innerHTML = '';
   _setLoadStatus('', '');
   clearResult();
+  clearATSDashboard();
   setState({ dataLoaded: false, loadStatus: 'idle' });
   setStep(1);
   showToast('Cleared.', 'info', 2000);
@@ -313,6 +316,23 @@ async function handleAnalyze() {
 
   try {
     const data = await analyze(question);
+    
+    // Also trigger ATS scoring in parallel
+    const resumeText = document.getElementById(IDS.RESUME_TEXT)?.value.trim() || '';
+    const jobText = document.getElementById(IDS.JOB_TEXT)?.value.trim() || '';
+    
+    showATSLoading();
+    getATSScore(resumeText, jobText)
+      .then(atsData => {
+        renderATSDashboard(atsData);
+        document.getElementById('atsDashboardSection').style.display = 'block';
+      })
+      .catch(err => {
+        console.error("ATS Scoring error:", err);
+        const section = document.getElementById('atsDashboardSection');
+        if (section) section.innerHTML = `<div class="ats-card" style="color:var(--error);padding:2rem;">Failed to load ATS Intelligence: ${err.message}</div>`;
+      });
+
     setState({ loading: false, analyzeStatus: 'success', lastQuestion: data.question, lastAnswer: data.answer, retrievedChunks: data.retrieved_chunks });
     addHistory({ question: data.question, answer: data.answer, chunks: data.retrieved_chunks });
     await hideLoader(true);
@@ -320,7 +340,7 @@ async function handleAnalyze() {
     animateResultReveal();
     setStep(3);
     renderHistory();
-    setTimeout(() => scrollTo(`#${IDS.RESULT_AREA}`, 70), 200);
+    setTimeout(() => scrollTo(`#atsDashboardSection`, 70), 200);
     showToast('Analysis complete!', 'success');
   } catch (err) {
     setState({ loading: false, analyzeStatus: 'error' });
