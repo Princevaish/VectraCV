@@ -352,6 +352,7 @@ async function _runAnalysis() {
 
     updateStep(1, 'Computing semantic similarity', 'Storing vectors in ChromaDB...');
     await loadData(resumeText, jdText);
+    setState({ dataLoaded: true });
 
     updateStep(2, 'Running keyword intelligence', 'Evaluating match, skills, and impact...');
     const atsData = await getATSScore(resumeText, jdText);

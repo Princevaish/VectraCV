@@ -1,5 +1,6 @@
 import { analyze } from '../api/apiService.js';
 import { showToast } from './toast.js';
+import { getState } from '../state/appState.js';
 
 let isGenerating = false;
 
@@ -10,6 +11,35 @@ export function initChatInterface() {
   const chips = document.querySelectorAll('.chat-chip');
 
   if (!input || !sendBtn || !messagesContainer) return;
+
+  // Render initial state
+  renderInitialState();
+
+  // Listen to state changes to enable chat
+  window.addEventListener('STATE_CHANGED', (e) => {
+    if (e.detail?.changed?.includes('dataLoaded')) {
+      renderInitialState();
+    }
+  });
+
+  function renderInitialState() {
+    const state = getState();
+    messagesContainer.innerHTML = ''; // clear
+
+    if (state.dataLoaded) {
+      input.disabled = false;
+      input.placeholder = "Ask VectraAI about your resume... (Shift+Enter for newline)";
+      appendMessage("Hello! I am your AI Career Copilot. I've analyzed your resume against the job description. What would you like to know?", "ai");
+    } else {
+      input.disabled = true;
+      input.placeholder = "Context needed...";
+      
+      const div = document.createElement('div');
+      div.className = "empty-state";
+      div.innerHTML = "<p>Upload a resume and job description to start AI analysis.</p>";
+      messagesContainer.appendChild(div);
+    }
+  }
 
   // Auto-resize textarea
   input.addEventListener('input', () => {
@@ -39,6 +69,12 @@ export function initChatInterface() {
   });
 
   async function handleSend() {
+    const state = getState();
+    if (!state.dataLoaded) {
+      showToast('Please run analysis first.', 'info');
+      return;
+    }
+
     const text = input.value.trim();
     if (!text || isGenerating) return;
 

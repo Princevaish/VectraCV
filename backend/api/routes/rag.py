@@ -59,6 +59,9 @@ def load_data(payload: LoadDataRequest) -> LoadDataResponse:
     logger.info("POST /api/load-data — ingesting resume + job description.")
 
     try:
+        # --- Clear previous session embeddings ---
+        vector_service.clear()
+
         # --- Resume ---
         resume_chunks = split_text(payload.resume)
         if not resume_chunks:
