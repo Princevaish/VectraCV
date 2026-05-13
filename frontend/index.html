@@ -115,6 +115,13 @@
           <span class="nav-item__label">AI Suggestions</span>
         </button>
  
+        <button class="nav-item" data-view="chat">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 11V6a2 2 0 00-2-2H4a2 2 0 00-2 2v5a2 2 0 002 2h2v3l3-3h5a2 2 0 002-2z" stroke-linejoin="round"/>
+          </svg>
+          <span class="nav-item__label">Chat with AI</span>
+        </button>
+ 
         <div class="sidebar__section-label" style="margin-top:8px;">Account</div>
  
         <button class="nav-item" data-view="history">
@@ -423,6 +430,54 @@
           <div class="empty-state">
             <p>No past analyses found.</p>
           </div>
+        </div>
+      </div>
+
+      <!-- ── CHAT WITH AI VIEW ────────────────────────────────────────── -->
+      <div id="view-chat" class="view" style="display:none;">
+        <div class="chat-workspace">
+          
+          <div class="chat-header">
+            <div class="section-heading" style="margin-bottom:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Conversational Copilot
+            </div>
+            <p class="view-subtitle" style="margin-bottom:16px;">Ask questions about your resume fit, missing skills, or get ATS rewriting advice.</p>
+            
+            <div class="chat-chips" id="chatChips">
+              <button class="chat-chip">Am I a good fit for this role?</button>
+              <button class="chat-chip">What skills am I missing?</button>
+              <button class="chat-chip">What ATS issues exist?</button>
+              <button class="chat-chip">Rewrite my most recent role</button>
+            </div>
+          </div>
+          
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-message chat-message--ai">
+              <div class="chat-message__avatar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <div class="chat-message__content">
+                Hello! I am your AI Career Copilot. I've analyzed your resume against the job description. What would you like to know?
+              </div>
+            </div>
+          </div>
+          
+          <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+              <textarea id="chatInput" class="chat-input" placeholder="Ask VectraAI about your resume... (Shift+Enter for newline)"></textarea>
+              <button id="chatSendBtn" class="chat-send-btn" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
         </div>
       </div>
 
