@@ -63,6 +63,7 @@ function _bootMainApp() {
 // ── Sidebar Navigation ──
 function initSidebar() {
   const navItems = document.querySelectorAll('.nav-item[data-view]');
+  const views = document.querySelectorAll('.view');
   
   navItems.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -78,9 +79,18 @@ function initSidebar() {
            showToast('Please upload documents and run analysis first.', 'info');
            return;
         }
+      } 
+      
+      // Toggle Views (SaaS routing behavior)
+      if (['ai', 'history', 'optimizer', 'settings'].includes(targetView)) {
+        views.forEach(v => v.style.display = 'none');
+        const viewEl = document.getElementById(`view-${targetView}`);
+        if (viewEl) viewEl.style.display = 'block';
+        window.scrollTo({ top: 0 });
       } else {
-        showToast('This view is coming soon in VectraAI Pro.', 'info');
-        return;
+        views.forEach(v => v.style.display = 'none');
+        const viewEl = document.getElementById('view-dashboard');
+        if (viewEl) viewEl.style.display = 'block';
       }
       
       navItems.forEach(i => i.classList.remove('active'));
@@ -121,14 +131,42 @@ function _bindUploader(type) {
   const fileInput = document.getElementById(`${type}FileInput`);
   const browseBtn = document.getElementById(`${type}BrowseBtn`);
   const textarea = document.getElementById(`${type}Textarea`);
-  const pasteToggle = document.getElementById(`${type}PasteToggle`);
   const removeBtn = document.getElementById(`${type}RemoveBtn`);
+  
+  const tabUpload = document.getElementById(`${type}TabUpload`);
+  const tabPaste = document.getElementById(`${type}TabPaste`);
+  const contentUpload = document.getElementById(`${type}ContentUpload`);
+  const contentPaste = document.getElementById(`${type}ContentPaste`);
+  const wordCount = document.getElementById(`${type}WordCount`);
 
   if (!card || !fileInput) return;
+
+  // Tabs
+  if (tabUpload && tabPaste) {
+    tabUpload.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tabUpload.classList.add('active');
+      tabPaste.classList.remove('active');
+      if (contentUpload) contentUpload.style.display = 'block';
+      if (contentPaste) contentPaste.style.display = 'none';
+    });
+    tabPaste.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tabPaste.classList.add('active');
+      tabUpload.classList.remove('active');
+      if (contentPaste) contentPaste.style.display = 'block';
+      if (contentUpload) contentUpload.style.display = 'none';
+      if (window.gsap && textarea) {
+        gsap.fromTo(textarea, {opacity: 0, y: 5}, {opacity: 1, y: 0, duration: 0.3});
+      }
+      textarea?.focus();
+    });
+  }
 
   // Browse click
   card.addEventListener('click', (e) => {
     if (e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
+    if (tabUpload && !tabUpload.classList.contains('active')) return;
     fileInput.click();
   });
   if (browseBtn) {
@@ -141,12 +179,15 @@ function _bindUploader(type) {
   // Drag and drop
   card.addEventListener('dragover', (e) => {
     e.preventDefault();
-    card.classList.add('is-dragover');
+    if (tabUpload && tabUpload.classList.contains('active')) {
+      card.classList.add('is-dragover');
+    }
   });
   card.addEventListener('dragleave', () => card.classList.remove('is-dragover'));
   card.addEventListener('drop', (e) => {
     e.preventDefault();
     card.classList.remove('is-dragover');
+    if (tabUpload && !tabUpload.classList.contains('active')) return;
     if (e.dataTransfer.files && e.dataTransfer.files.length) {
       _handleFile(type, e.dataTransfer.files[0]);
     }
@@ -160,16 +201,19 @@ function _bindUploader(type) {
     fileInput.value = ''; // reset
   });
 
-  // Paste toggle
-  if (pasteToggle && textarea) {
-    pasteToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      textarea.style.display = 'block';
-      textarea.focus();
-      pasteToggle.style.display = 'none';
-      if (window.gsap) gsap.fromTo(textarea, {opacity: 0, y: -10}, {opacity: 1, y: 0, duration: 0.3});
+  // Textarea input & resize
+  if (textarea) {
+    textarea.addEventListener('input', () => {
+      _checkAnalyzeButton();
+      // Auto resize
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px';
+      
+      if (wordCount) {
+        const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+        wordCount.textContent = `${words} words`;
+      }
     });
-    textarea.addEventListener('input', _checkAnalyzeButton);
   }
 
   // Remove file
@@ -177,6 +221,7 @@ function _bindUploader(type) {
     removeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (textarea) textarea.value = '';
+      if (wordCount) wordCount.textContent = '0 words';
       card.classList.remove('is-loaded', 'is-uploading', 'is-error');
       _checkAnalyzeButton();
     });
@@ -189,6 +234,7 @@ async function _handleFile(type, file) {
   const fileSize = document.getElementById(`${type}FileSize`);
   const progressFill = document.getElementById(`${type}ProgressFill`);
   const textarea = document.getElementById(`${type}Textarea`);
+  const wordCount = document.getElementById(`${type}WordCount`);
 
   if (card) {
     card.classList.remove('is-loaded', 'is-error');
@@ -205,6 +251,10 @@ async function _handleFile(type, file) {
 
     if (textarea) {
       textarea.value = res.extracted_text || '';
+      if (wordCount) {
+        const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+        wordCount.textContent = `${words} words`;
+      }
     }
 
     if (card) {
@@ -263,23 +313,54 @@ async function _runAnalysis() {
   }
 
   const overlay = document.getElementById('analyzeOverlay');
-  const overlayMsg = document.getElementById('overlayMsg');
-  const overlaySub = document.getElementById('overlaySub');
+  const steps = document.querySelectorAll('.overlay__step');
+  const progressFill = document.getElementById('overlayProgressFill');
+  const msg = document.getElementById('overlayMsg');
+  const sub = document.getElementById('overlaySub');
   
   if (overlay) {
     overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
-    if (window.gsap) gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    if (window.gsap) {
+      gsap.fromTo(overlay, { opacity: 0, backdropFilter: 'blur(0px)' }, { opacity: 1, backdropFilter: 'blur(12px)', duration: 0.4 });
+      gsap.set(steps, { opacity: 0.4, x: -10, color: 'var(--ink-muted)' });
+      if (progressFill) gsap.set(progressFill, { width: '0%' });
+    }
   }
 
+  const updateStep = (idx, title, desc) => {
+    if(msg) msg.textContent = title;
+    if(sub) sub.textContent = desc;
+    if(!window.gsap) return;
+    
+    if(idx > 0 && steps[idx-1]) {
+      gsap.to(steps[idx-1], { color: 'var(--success)', opacity: 1, duration: 0.3 });
+    }
+    if(idx < steps.length && steps[idx]) {
+      gsap.to(steps[idx], { color: 'var(--accent)', opacity: 1, x: 0, duration: 0.3 });
+      if (progressFill) {
+        gsap.to(progressFill, { width: `${(idx + 1) * 25}%`, duration: 0.6, ease: 'power2.out' });
+      }
+    }
+  };
+
   try {
-    if (overlayMsg) overlayMsg.textContent = 'Storing vectors in ChromaDB...';
-    if (overlaySub) overlaySub.textContent = 'Preparing embeddings for semantic scoring';
+    updateStep(0, 'Initializing Engine', 'Preparing vector models and semantic space...');
+    await new Promise(r => setTimeout(r, 600)); // UX delay
+
+    updateStep(1, 'Computing semantic similarity', 'Storing vectors in ChromaDB...');
     await loadData(resumeText, jdText);
 
-    if (overlayMsg) overlayMsg.textContent = 'Running semantic ATS scoring...';
-    if (overlaySub) overlaySub.textContent = 'Evaluating keyword match, skill coverage, and quantifiable impact';
+    updateStep(2, 'Running keyword intelligence', 'Evaluating match, skills, and impact...');
     const atsData = await getATSScore(resumeText, jdText);
+
+    updateStep(3, 'Generating AI recommendations', 'Extracting actionable career insights...');
+    
+    // Populate simple AI suggestions and History
+    if (typeof _populateAISuggestions === 'function') _populateAISuggestions(atsData);
+    if (typeof _populateHistory === 'function') _populateHistory(atsData);
+
+    await new Promise(r => setTimeout(r, 700));
 
     const atsSection = document.getElementById('atsDashboardSection');
     const atsContainer = document.getElementById('atsDashboard');
@@ -288,7 +369,11 @@ async function _runAnalysis() {
       atsSection.style.display = 'block';
       renderATSDashboard(atsContainer, atsData);
       
-      // Update nav active state to ATS
+      // Switch back to dashboard view if on another view
+      document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+      document.getElementById('view-dashboard').style.display = 'block';
+      
+      // Update nav active state to ATS (which lives on Dashboard view currently)
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       const atsNav = document.querySelector('.nav-item[data-view="ats"]');
       if(atsNav) atsNav.classList.add('active');
@@ -316,4 +401,72 @@ async function _runAnalysis() {
       }
     }
   }
+}
+
+// ── Dummy populator for views ──
+function _populateAISuggestions(atsData) {
+  const container = document.getElementById('aiSuggestionsContainer');
+  if (!container || !atsData) return;
+  
+  const skills = atsData.missing_skills || [];
+  let html = `<div class="ai-cards">`;
+  
+  if (skills.length) {
+    html += `
+      <div class="ai-card">
+        <div class="ai-card__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Missing Core Keywords</h4>
+          <p>Your resume is missing some crucial ATS keywords found in the Job Description.</p>
+          <div class="ai-card__pills">
+            ${skills.map(s => `<span class="ai-pill">${s}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `
+    <div class="ai-card">
+      <div class="ai-card__icon" style="color:var(--accent2); background:rgba(var(--accent2-rgb),0.1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
+      <div>
+        <h4>Actionable Insight</h4>
+        <p>Consider re-writing your most recent role to focus more on quantifiable metrics rather than just responsibilities. ATS systems rank metric-driven bullet points higher.</p>
+      </div>
+    </div>
+  </div>`;
+  
+  container.innerHTML = html;
+}
+
+function _populateHistory(atsData) {
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  
+  const existing = list.querySelector('.empty-state') ? '' : list.innerHTML;
+  
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const score = Math.round(atsData.score * 100);
+  
+  const html = `
+    <div class="history-item">
+      <div class="history-item__main">
+        <div class="history-item__title">Software Engineer</div>
+        <div class="history-item__date">${date}</div>
+      </div>
+      <div class="history-item__score">
+        <span class="score-badge ${score >= 75 ? 'good' : 'warning'}">${score}/100</span>
+      </div>
+    </div>
+  `;
+  
+  list.innerHTML = html + existing;
 }

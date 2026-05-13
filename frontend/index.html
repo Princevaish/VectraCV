@@ -168,25 +168,41 @@
     <!-- ░░ MAIN CONTENT ░░ -->
     <main class="main-content" id="mainContent" aria-label="Main content">
  
-      <!-- ANALYZE OVERLAY -->
+      <!-- ANALYZE OVERLAY (Premium Semantic Loader) -->
       <div id="analyzeOverlay" class="overlay" aria-hidden="true">
-        <div class="overlay__ring-wrap">
-          <svg class="overlay__ring" viewBox="0 0 80 80" fill="none">
-            <circle cx="40" cy="40" r="34" stroke="var(--border)" stroke-width="3"/>
-            <circle cx="40" cy="40" r="34" stroke="url(#overlayGrad)" stroke-width="3"
-                    stroke-linecap="round" stroke-dasharray="80 134" class="overlay__arc"/>
-            <defs>
-              <linearGradient id="overlayGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="var(--accent)"/>
-                <stop offset="100%" stop-color="var(--accent2)"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="overlay__logo">V</div>
+        <div class="overlay__inner">
+          <div class="overlay__ring-wrap">
+            <svg class="overlay__ring" viewBox="0 0 100 100" fill="none">
+              <circle cx="50" cy="50" r="46" stroke="var(--border)" stroke-width="2"/>
+              <circle cx="50" cy="50" r="46" stroke="url(#overlayGrad)" stroke-width="3"
+                      stroke-linecap="round" stroke-dasharray="289" class="overlay__arc"/>
+              <defs>
+                <linearGradient id="overlayGrad" x1="0" y1="0" x2="100" y2="100">
+                  <stop offset="0%" stop-color="var(--accent)"/>
+                  <stop offset="100%" stop-color="var(--accent2)"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="overlay__logo">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="overlay__status">
+            <h3 class="overlay__msg" id="overlayMsg">Initializing Engine</h3>
+            <p class="overlay__sub" id="overlaySub">Preparing vector models...</p>
+          </div>
+          <div class="overlay__progress-bar">
+            <div class="overlay__progress-fill" id="overlayProgressFill"></div>
+          </div>
+          <ul class="overlay__steps" id="overlaySteps">
+            <li class="overlay__step pending" data-step="1">Initializing ATS engine</li>
+            <li class="overlay__step pending" data-step="2">Computing semantic similarity</li>
+            <li class="overlay__step pending" data-step="3">Running keyword intelligence</li>
+            <li class="overlay__step pending" data-step="4">Generating AI recommendations</li>
+          </ul>
         </div>
-        <p class="overlay__msg" id="overlayMsg">Running ATS analysis…</p>
-        <p class="overlay__sub" id="overlaySub">Semantic scoring in progress</p>
-        <div class="overlay__dots"><span></span><span></span><span></span></div>
       </div>
  
       <!-- ── DASHBOARD VIEW ──────────────────────────────────────────── -->
@@ -224,116 +240,130 @@
         <div class="upload-grid" id="uploadGrid">
  
           <!-- Resume card -->
-          <div class="upload-card" id="resumeUploadCard"
-               tabindex="0" aria-label="Upload resume" role="button">
+          <div class="upload-card" id="resumeUploadCard" tabindex="0" aria-label="Upload resume" role="region">
             <div class="upload-card__header">
-              <div class="upload-card__icon upload-card__icon--resume">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M10 2H4a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8l-6-6z"/>
-                  <path d="M10 2v6h6"/>
+              <div class="upload-card__header-left">
+                <div class="upload-card__icon upload-card__icon--resume">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10 2H4a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8l-6-6z"/>
+                    <path d="M10 2v6h6"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="upload-card__title">Resume</div>
+                  <div class="upload-card__formats">PDF · DOCX · TXT</div>
+                </div>
+              </div>
+              <div class="upload-card__tabs">
+                <button class="upload-card__tab active" id="resumeTabUpload">File</button>
+                <button class="upload-card__tab" id="resumeTabPaste">Text</button>
+              </div>
+            </div>
+
+            <!-- Upload View -->
+            <div class="upload-card__content active" id="resumeContentUpload">
+              <div class="upload-card__drop-area" id="resumeDropArea">
+                <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M14 18V8M10 12l4-4 4 4"/>
+                  <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
                 </svg>
+                <div class="upload-card__drop-text">Drop resume here</div>
+                <div class="upload-card__drop-sub">
+                  or <button class="upload-card__browse" id="resumeBrowseBtn" type="button">browse files</button>
+                </div>
               </div>
-              <div>
-                <div class="upload-card__title">Resume</div>
-                <div class="upload-card__formats">PDF · DOCX · TXT</div>
-              </div>
-            </div>
- 
-            <div class="upload-card__drop-area" id="resumeDropArea">
-              <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
-                <path d="M14 18V8M10 12l4-4 4 4"/>
-                <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
-              </svg>
-              <div class="upload-card__drop-text">Drop resume here</div>
-              <div class="upload-card__drop-sub">
-                or <button class="upload-card__browse" id="resumeBrowseBtn" type="button">browse files</button>
-              </div>
-            </div>
- 
-            <div class="upload-card__loaded" id="resumeLoaded">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
-                <circle cx="8" cy="8" r="7"/>
-                <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span class="upload-card__file-name" id="resumeFileName">—</span>
-              <span class="upload-card__file-size" id="resumeFileSize"></span>
-              <button class="upload-card__remove" id="resumeRemoveBtn" aria-label="Remove file">
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M2 2l9 9M11 2l-9 9"/>
+
+              <div class="upload-card__loaded" id="resumeLoaded">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
+                  <circle cx="8" cy="8" r="7"/>
+                  <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-              </button>
+                <span class="upload-card__file-name" id="resumeFileName">—</span>
+                <span class="upload-card__file-size" id="resumeFileSize"></span>
+                <button class="upload-card__remove" id="resumeRemoveBtn" aria-label="Remove file">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 2l9 9M11 2l-9 9"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="upload-card__progress" id="resumeProgress">
+                <div class="upload-card__progress-fill" id="resumeProgressFill"></div>
+              </div>
             </div>
- 
-            <div class="upload-card__progress" id="resumeProgress">
-              <div class="upload-card__progress-fill" id="resumeProgressFill"></div>
+
+            <!-- Paste View -->
+            <div class="upload-card__content" id="resumeContentPaste" style="display:none;">
+              <textarea class="premium-textarea" id="resumeTextarea" placeholder="Paste your resume text here..."></textarea>
+              <div class="premium-textarea__footer">
+                <span class="word-count" id="resumeWordCount">0 words</span>
+              </div>
             </div>
- 
-            <button class="upload-card__paste-toggle" id="resumePasteToggle" type="button">
-              Paste text manually instead
-            </button>
-            <textarea
-              class="upload-card__textarea" id="resumeTextarea"
-              placeholder="Paste resume text here…"
-              aria-label="Resume text"
-            ></textarea>
- 
+
             <input type="file" id="resumeFileInput" accept=".pdf,.docx,.doc,.txt" hidden />
           </div>
  
           <!-- Job Description card -->
-          <div class="upload-card" id="jdUploadCard"
-               tabindex="0" aria-label="Upload job description" role="button">
+          <div class="upload-card" id="jdUploadCard" tabindex="0" aria-label="Upload job description" role="region">
             <div class="upload-card__header">
-              <div class="upload-card__icon upload-card__icon--jd">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="2" y="2" width="14" height="14" rx="2"/>
-                  <path d="M5 6h8M5 9h6M5 12h4"/>
+              <div class="upload-card__header-left">
+                <div class="upload-card__icon upload-card__icon--jd">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="2" width="14" height="14" rx="2"/>
+                    <path d="M5 6h8M5 9h6M5 12h4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="upload-card__title">Job Description</div>
+                  <div class="upload-card__formats">PDF · DOCX · TXT</div>
+                </div>
+              </div>
+              <div class="upload-card__tabs">
+                <button class="upload-card__tab active" id="jdTabUpload">File</button>
+                <button class="upload-card__tab" id="jdTabPaste">Text</button>
+              </div>
+            </div>
+
+            <!-- Upload View -->
+            <div class="upload-card__content active" id="jdContentUpload">
+              <div class="upload-card__drop-area" id="jdDropArea">
+                <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M14 18V8M10 12l4-4 4 4"/>
+                  <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
                 </svg>
+                <div class="upload-card__drop-text">Drop job description here</div>
+                <div class="upload-card__drop-sub">
+                  or <button class="upload-card__browse" id="jdBrowseBtn" type="button">browse files</button>
+                </div>
               </div>
-              <div>
-                <div class="upload-card__title">Job Description</div>
-                <div class="upload-card__formats">PDF · DOCX · TXT</div>
-              </div>
-            </div>
- 
-            <div class="upload-card__drop-area" id="jdDropArea">
-              <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
-                <path d="M14 18V8M10 12l4-4 4 4"/>
-                <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
-              </svg>
-              <div class="upload-card__drop-text">Drop job description here</div>
-              <div class="upload-card__drop-sub">
-                or <button class="upload-card__browse" id="jdBrowseBtn" type="button">browse files</button>
-              </div>
-            </div>
- 
-            <div class="upload-card__loaded" id="jdLoaded">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
-                <circle cx="8" cy="8" r="7"/>
-                <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span class="upload-card__file-name" id="jdFileName">—</span>
-              <span class="upload-card__file-size" id="jdFileSize"></span>
-              <button class="upload-card__remove" id="jdRemoveBtn" aria-label="Remove file">
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M2 2l9 9M11 2l-9 9"/>
+
+              <div class="upload-card__loaded" id="jdLoaded">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
+                  <circle cx="8" cy="8" r="7"/>
+                  <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-              </button>
+                <span class="upload-card__file-name" id="jdFileName">—</span>
+                <span class="upload-card__file-size" id="jdFileSize"></span>
+                <button class="upload-card__remove" id="jdRemoveBtn" aria-label="Remove file">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 2l9 9M11 2l-9 9"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="upload-card__progress" id="jdProgress">
+                <div class="upload-card__progress-fill" id="jdProgressFill"></div>
+              </div>
             </div>
- 
-            <div class="upload-card__progress" id="jdProgress">
-              <div class="upload-card__progress-fill" id="jdProgressFill"></div>
+
+            <!-- Paste View -->
+            <div class="upload-card__content" id="jdContentPaste" style="display:none;">
+              <textarea class="premium-textarea" id="jdTextarea" placeholder="Paste job description text here..."></textarea>
+              <div class="premium-textarea__footer">
+                <span class="word-count" id="jdWordCount">0 words</span>
+              </div>
             </div>
- 
-            <button class="upload-card__paste-toggle" id="jdPasteToggle" type="button">
-              Paste text manually instead
-            </button>
-            <textarea
-              class="upload-card__textarea" id="jdTextarea"
-              placeholder="Paste job description here…"
-              aria-label="Job description text"
-            ></textarea>
- 
+
             <input type="file" id="jdFileInput" accept=".pdf,.docx,.doc,.txt" hidden />
           </div>
         </div>
@@ -343,12 +373,14 @@
           <p class="analyse-cta-row__hint" id="analyseCTAHint">
             Upload both documents to run ATS analysis
           </p>
-          <button class="btn-primary" id="runAnalysisBtn" disabled>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            Run ATS Analysis
+          <button class="btn-analyze" id="runAnalysisBtn" disabled>
+            <span class="btn-analyze__bg"></span>
+            <span class="btn-analyze__content">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 4l3 3-3 3M15 7H6a3 3 0 00-3 3v4"/>
+              </svg>
+              Generate AI Insights
+            </span>
           </button>
         </div>
  
@@ -360,11 +392,43 @@
  
       </div><!-- /view-dashboard -->
  
+      <!-- ── AI SUGGESTIONS VIEW ─────────────────────────────────────── -->
+      <div id="view-ai" class="view" style="display:none;">
+        <div class="section-heading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/>
+          </svg>
+          AI Resume Suggestions
+        </div>
+        <p class="view-subtitle">Actionable recommendations to improve your semantic match.</p>
+        <div id="aiSuggestionsContainer" class="ai-suggestions-container">
+          <!-- Populated by JS -->
+          <div class="empty-state">
+            <p>Run an analysis first to generate AI suggestions.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HISTORY VIEW ────────────────────────────────────────────── -->
+      <div id="view-history" class="view" style="display:none;">
+        <div class="section-heading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 8v4l3 3M22 12A10 10 0 1112 2v0a10 10 0 0110 10z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Analysis History
+        </div>
+        <p class="view-subtitle">Your past resume optimizations.</p>
+        <div id="historyList" class="history-list">
+          <!-- Populated by JS -->
+          <div class="empty-state">
+            <p>No past analyses found.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- ── PLACEHOLDER VIEWS ───────────────────────────────────────── -->
       <div id="view-ats"       class="view" style="display:none;"></div>
       <div id="view-optimizer" class="view" style="display:none;"></div>
-      <div id="view-ai"        class="view" style="display:none;"></div>
-      <div id="view-history"   class="view" style="display:none;"></div>
       <div id="view-settings"  class="view" style="display:none;"></div>
  
     </main><!-- /main-content -->
