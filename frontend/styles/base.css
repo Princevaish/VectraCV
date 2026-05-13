@@ -12,6 +12,7 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -19,33 +20,29 @@ body {
   background: var(--bg);
   color: var(--ink);
   min-height: 100vh;
+  line-height: 1.5;
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); }
-
-/* Selection */
-::selection {
-  background: var(--accent);
-  color: var(--bg);
+/* Image & SVG Constraints */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
-/* Focus ring */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-
-/* Typography scale */
-h1, h2, h3, h4 {
+/* Typography Normalization */
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
-  line-height: 1.1;
+  line-height: 1.2;
   letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+p {
+  overflow-wrap: break-word;
 }
 
 a {
@@ -60,12 +57,29 @@ button {
   font-family: inherit;
 }
 
-textarea, input {
+textarea, input, select {
   font-family: inherit;
+  font-size: 100%;
 }
 
-img, svg {
-  display: block;
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+/* Selection */
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Utility: visually hidden */

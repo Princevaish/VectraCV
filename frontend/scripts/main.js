@@ -1,61 +1,36 @@
 // frontend/scripts/main.js
 
-import { CONFIG }                           from '../config/config.js';
-import { IDS, EVENTS, DEMO_RESUME, DEMO_JOB } from './utils/constants.js';
-import { wordCount, scrollTo, on }            from './utils/helpers.js';
-import { getState, setState, addHistory, clearHistory, toggleTheme } from './state/appState.js';
-import { loadData, analyze, getATSScore, ApiError }        from './api/apiService.js';
-
+import { getState, setState, toggleTheme } from './state/appState.js';
+import { loadData, getATSScore, uploadFile } from './api/apiService.js';
 import { initClerk, AUTH_EVENTS, signOut, getUserEmail, getUserName, getUserAvatar } from './auth/clerk.js';
 import { showAuthLoader, hideAuthLoader, renderLoginCard, renderUserPill, clearUserPill, transitionToApp, transitionToAuth } from './auth/authUI.js';
-
-import { showToast }                  from './components/toast.js';
-import { showLoader, hideLoader }     from './components/loader.js';
-import { renderResult, clearResult }  from './components/resultCard.js';
-import { renderHistory }              from './components/history.js';
-import { setStep, bindStepNavigation } from './components/stepManager.js';
-import { renderATSDashboard, clearATSDashboard, showATSLoading } from './components/atsDashboard.js';
-
-import {
-  runPageEntrance, bindScrollRevealAnimations,
-  bindButtonMicroInteractions, bindPillAnimations,
-  animateResultReveal, animateChunkChips,
-  shakeElement, animateStatusMessage,
-} from './animations/gsapAnimations.js';
-import { highlight } from './animations/transitions.js';
-
-/* ── BOOT ─────────────────────────────────────────────────────────────────── */
+import { showToast } from './components/toast.js';
+import { renderATSDashboard } from './components/atsDashboard.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
-  _bindAuthEvents();
-  showAuthLoader();
+  window.addEventListener(AUTH_EVENTS.READY, (e) => _onClerkReady(e.detail));
+  window.addEventListener(AUTH_EVENTS.SIGNED_IN, (e) => _onSignedIn(e.detail));
+  window.addEventListener(AUTH_EVENTS.SIGNED_OUT, () => _onSignedOut());
 
+  showAuthLoader();
   try {
     await initClerk();
   } catch (err) {
-    console.error('[ResumeRAG] Clerk init error:', err);
+    console.error('[VectraAI] Clerk init error:', err);
     hideAuthLoader();
-    _showAuthScreen();
+    transitionToAuth();
     renderLoginCard();
   }
 });
-
-/* ── AUTH EVENT BINDINGS ──────────────────────────────────────────────────── */
-
-function _bindAuthEvents() {
-  window.addEventListener(AUTH_EVENTS.READY,      (e) => _onClerkReady(e.detail));
-  window.addEventListener(AUTH_EVENTS.SIGNED_IN,  (e) => _onSignedIn(e.detail));
-  window.addEventListener(AUTH_EVENTS.SIGNED_OUT, ()  => _onSignedOut());
-}
 
 function _onClerkReady({ user }) {
   hideAuthLoader();
   if (user) {
     _bootMainApp();
   } else {
-    _showAuthScreen();
+    transitionToAuth();
     renderLoginCard();
   }
 }
@@ -70,47 +45,53 @@ function _onSignedOut() {
   clearUserPill();
   transitionToAuth();
   renderLoginCard();
-  setState({ dataLoaded: false, loadStatus: 'idle' });
-  setStep(1);
-  clearResult();
-  clearATSDashboard();
 }
-
-/* ── HELPERS ──────────────────────────────────────────────────────────────── */
-
-function _showAuthScreen() {
-  const authScreen = document.getElementById('authScreen');
-  if (authScreen) authScreen.style.display = 'flex';
-}
-
-/* ── MAIN APP BOOT ────────────────────────────────────────────────────────── */
 
 function _bootMainApp() {
   transitionToApp();
   renderUserPill();
+  initSidebar();
   initTheme();
-  initTextareas();
-  initLoadSection();
-  initQuestionPills();
-  initAnalyzeSection();
-  initHistorySection();
-  initStateListener();
-  bindStepNavigation();
+  initUploaders();
+  initAnalysisFlow();
 
-  setTimeout(() => {
-    runPageEntrance();
-    bindScrollRevealAnimations();
-    requestAnimationFrame(() => {
-      bindButtonMicroInteractions();
-      bindPillAnimations();
-    });
-  }, 150);
+  if (window.gsap) {
+    gsap.from('#mainContent', { opacity: 0, y: 15, duration: 0.5, ease: 'power2.out', delay: 0.2 });
+  }
 }
 
-/* ── THEME ────────────────────────────────────────────────────────────────── */
+// ── Sidebar Navigation ──
+function initSidebar() {
+  const navItems = document.querySelectorAll('.nav-item[data-view]');
+  
+  navItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetView = btn.getAttribute('data-view');
+      
+      if (targetView === 'dashboard') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetView === 'ats') {
+        const atsSection = document.getElementById('atsDashboardSection');
+        if (atsSection && atsSection.style.display !== 'none') {
+           atsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+           showToast('Please upload documents and run analysis first.', 'info');
+           return;
+        }
+      } else {
+        showToast('This view is coming soon in VectraAI Pro.', 'info');
+        return;
+      }
+      
+      navItems.forEach(i => i.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
 
+// ── Theme ──
 function initTheme() {
-  const btn = document.getElementById(IDS.THEME_BTN);
+  const btn = document.getElementById('themeBtn');
   if (!btn) return;
   const sunIcon  = btn.querySelector('.icon-sun');
   const moonIcon = btn.querySelector('.icon-moon');
@@ -129,269 +110,210 @@ function initTheme() {
   });
 }
 
-/* ── TEXTAREAS ────────────────────────────────────────────────────────────── */
+// ── Upload Handlers ──
+function initUploaders() {
+  _bindUploader('resume');
+  _bindUploader('jd');
+}
 
-function initTextareas() {
-  _bindWordCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _bindWordCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
+function _bindUploader(type) {
+  const card = document.getElementById(`${type}UploadCard`);
+  const fileInput = document.getElementById(`${type}FileInput`);
+  const browseBtn = document.getElementById(`${type}BrowseBtn`);
+  const textarea = document.getElementById(`${type}Textarea`);
+  const pasteToggle = document.getElementById(`${type}PasteToggle`);
+  const removeBtn = document.getElementById(`${type}RemoveBtn`);
 
-  document.getElementById(IDS.RESUME_CLEAR)?.addEventListener('click', () => {
-    const el = document.getElementById(IDS.RESUME_TEXT);
-    if (el) el.value = '';
-    _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
+  if (!card || !fileInput) return;
+
+  // Browse click
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
+    fileInput.click();
   });
+  if (browseBtn) {
+    browseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+  }
 
-  document.getElementById(IDS.JOB_CLEAR)?.addEventListener('click', () => {
-    const el = document.getElementById(IDS.JOB_TEXT);
-    if (el) el.value = '';
-    _updateCount(IDS.JOB_TEXT, IDS.JOB_COUNT);
+  // Drag and drop
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    card.classList.add('is-dragover');
   });
-}
-
-function _bindWordCount(textareaId, countId) {
-  document.getElementById(textareaId)?.addEventListener('input', () => _updateCount(textareaId, countId));
-}
-
-function _updateCount(textareaId, countId) {
-  const text  = document.getElementById(textareaId)?.value || '';
-  const count = wordCount(text);
-  const el    = document.getElementById(countId);
-  if (!el) return;
-  el.textContent = `${count} word${count !== 1 ? 's' : ''}`;
-  el.classList.toggle('has-content', count > 0);
-}
-
-/* ── LOAD SECTION ─────────────────────────────────────────────────────────── */
-
-function initLoadSection() {
-  document.getElementById(IDS.LOAD_BTN)?.addEventListener('click',  handleLoadData);
-  document.getElementById(IDS.DEMO_BTN)?.addEventListener('click',  fillDemoData);
-  document.getElementById(IDS.CLEAR_ALL)?.addEventListener('click', handleClearAll);
-}
-
-async function handleLoadData() {
-  const resume = document.getElementById(IDS.RESUME_TEXT)?.value.trim() || '';
-  const job    = document.getElementById(IDS.JOB_TEXT)?.value.trim()    || '';
-
-  if (!resume) {
-    shakeElement(document.getElementById(IDS.RESUME_TEXT));
-    showToast('Please enter your resume text.', 'error');
-    return;
-  }
-  if (!job) {
-    shakeElement(document.getElementById(IDS.JOB_TEXT));
-    showToast('Please enter the job description.', 'error');
-    return;
-  }
-
-  _setLoadBtnState('loading');
-  _setLoadStatus('', '');
-
-  try {
-    const data = await loadData(resume, job);
-    setState({ dataLoaded: true, loadStatus: 'success', resumeChunks: data.resume_chunks, jobChunks: data.job_chunks });
-    _setLoadStatus(`✓ ${data.resume_chunks + data.job_chunks} chunks stored in Endee`, 'is-success');
-    _renderChunkChips(data.resume_chunks, data.job_chunks);
-    setStep(2);
-    showToast(`Loaded — ${data.resume_chunks} resume + ${data.job_chunks} job chunks`, 'success');
-    setTimeout(() => scrollTo(`#${IDS.ANALYZE_SECTION}`, 80), 300);
-  } catch (err) {
-    const msg = err instanceof ApiError ? err.message : 'Network error — is the backend running?';
-    _setLoadStatus(`✗ ${msg}`, 'is-error');
-    setState({ loadStatus: 'error', error: msg });
-    showToast(`Load failed: ${msg}`, 'error', 6000);
-  } finally {
-    _setLoadBtnState('idle');
-  }
-}
-
-function _setLoadBtnState(state) {
-  const btn = document.getElementById(IDS.LOAD_BTN);
-  if (!btn) return;
-  btn.disabled = state === 'loading';
-  btn.innerHTML = state === 'loading'
-    ? `<span class="btn-spinner"></span> Loading…`
-    : `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Load into Endee`;
-}
-
-function _setLoadStatus(text, cls) {
-  const el = document.getElementById(IDS.LOAD_STATUS);
-  if (!el) return;
-  el.textContent = text;
-  el.className   = `load-status ${cls}`.trim();
-  if (text) animateStatusMessage(el);
-}
-
-function _renderChunkChips(resumeN, jobN) {
-  const el = document.getElementById(IDS.CHUNK_CHIPS);
-  if (!el) return;
-  el.innerHTML = `
-    <span class="chunk-chip chunk-chip--resume">${resumeN} resume chunks</span>
-    <span class="chunk-chip chunk-chip--job">${jobN} job chunks</span>
-  `;
-  animateChunkChips();
-}
-
-function fillDemoData() {
-  const rt = document.getElementById(IDS.RESUME_TEXT);
-  const jt = document.getElementById(IDS.JOB_TEXT);
-  if (rt) rt.value = DEMO_RESUME;
-  if (jt) jt.value = DEMO_JOB;
-  _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _updateCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
-  showToast('Demo data loaded — click "Load into Endee" next.', 'info');
-  if (window.gsap) {
-    gsap.from(['#resumePanel', '#jobPanel'], { borderColor: 'var(--accent)', duration: 0.5, stagger: 0.1, ease: 'power2.out' });
-  }
-}
-
-function handleClearAll() {
-  const rt = document.getElementById(IDS.RESUME_TEXT);
-  const jt = document.getElementById(IDS.JOB_TEXT);
-  if (rt) rt.value = '';
-  if (jt) jt.value = '';
-  _updateCount(IDS.RESUME_TEXT, IDS.RESUME_COUNT);
-  _updateCount(IDS.JOB_TEXT,    IDS.JOB_COUNT);
-  const chips = document.getElementById(IDS.CHUNK_CHIPS);
-  if (chips) chips.innerHTML = '';
-  _setLoadStatus('', '');
-  clearResult();
-  clearATSDashboard();
-  setState({ dataLoaded: false, loadStatus: 'idle' });
-  setStep(1);
-  showToast('Cleared.', 'info', 2000);
-}
-
-/* ── QUESTION PILLS ───────────────────────────────────────────────────────── */
-
-function initQuestionPills() {
-  const container = document.getElementById(IDS.QUESTION_PILLS);
-  if (!container) return;
-
-  container.innerHTML = CONFIG.PRESET_QUESTIONS
-    .map(({ label, q }) => `<button class="pill" data-q="${q}" type="button">${label}</button>`)
-    .join('');
-
-  container.addEventListener('click', e => {
-    const pill = e.target.closest('.pill');
-    if (!pill) return;
-    container.querySelectorAll('.pill').forEach(p => p.classList.remove('is-active'));
-    pill.classList.add('is-active');
-    const qi = document.getElementById(IDS.QUESTION_INPUT);
-    if (qi) qi.value = pill.dataset.q;
-    _clearValidationError();
-  });
-
-  requestAnimationFrame(bindPillAnimations);
-}
-
-/* ── ANALYZE SECTION ──────────────────────────────────────────────────────── */
-
-function initAnalyzeSection() {
-  document.getElementById(IDS.ANALYZE_BTN)?.addEventListener('click', handleAnalyze);
-  document.getElementById(IDS.QUESTION_INPUT)?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleAnalyze();
-  });
-  document.getElementById(IDS.QUESTION_INPUT)?.addEventListener('input', () => {
-    if (document.getElementById(IDS.QUESTION_INPUT)?.value.trim()) _clearValidationError();
-  });
-}
-
-async function handleAnalyze() {
-  const question = document.getElementById(IDS.QUESTION_INPUT)?.value.trim() || '';
-
-  if (!question) {
-    _showValidationError('Please enter a question or pick one above.');
-    shakeElement(document.getElementById(IDS.QUESTION_INPUT));
-    return;
-  }
-
-  if (!getState().dataLoaded) {
-    showToast('Tip: Load your data first for best results.', 'warning', 4000);
-  }
-
-  setState({ loading: true, analyzeStatus: 'idle' });
-  _setAnalyzeBtnState('loading');
-  showLoader();
-
-  try {
-    const data = await analyze(question);
-    
-    // Also trigger ATS scoring in parallel
-    const resumeText = document.getElementById(IDS.RESUME_TEXT)?.value.trim() || '';
-    const jobText = document.getElementById(IDS.JOB_TEXT)?.value.trim() || '';
-    
-    showATSLoading();
-    getATSScore(resumeText, jobText)
-      .then(atsData => {
-        renderATSDashboard(atsData);
-        document.getElementById('atsDashboardSection').style.display = 'block';
-      })
-      .catch(err => {
-        console.error("ATS Scoring error:", err);
-        const section = document.getElementById('atsDashboardSection');
-        if (section) section.innerHTML = `<div class="ats-card" style="color:var(--error);padding:2rem;">Failed to load ATS Intelligence: ${err.message}</div>`;
-      });
-
-    setState({ loading: false, analyzeStatus: 'success', lastQuestion: data.question, lastAnswer: data.answer, retrievedChunks: data.retrieved_chunks });
-    addHistory({ question: data.question, answer: data.answer, chunks: data.retrieved_chunks });
-    await hideLoader(true);
-    renderResult(data.question, data.answer, data.retrieved_chunks);
-    animateResultReveal();
-    setStep(3);
-    renderHistory();
-    setTimeout(() => scrollTo(`#atsDashboardSection`, 70), 200);
-    showToast('Analysis complete!', 'success');
-  } catch (err) {
-    setState({ loading: false, analyzeStatus: 'error' });
-    const msg = err instanceof ApiError ? err.message : 'Network error — is the backend running?';
-    await hideLoader(false);
-    showToast(`Analysis failed: ${msg}`, 'error', 7000);
-  } finally {
-    _setAnalyzeBtnState('idle');
-  }
-}
-
-function _setAnalyzeBtnState(state) {
-  const btn = document.getElementById(IDS.ANALYZE_BTN);
-  if (!btn) return;
-  btn.disabled = state === 'loading';
-  btn.innerHTML = state === 'loading'
-    ? `<span class="btn-spinner"></span> Analyzing…`
-    : `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Analyze`;
-}
-
-function _showValidationError(msg) {
-  const el = document.getElementById(IDS.QUESTION_VALID);
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-}
-
-function _clearValidationError() {
-  const el = document.getElementById(IDS.QUESTION_VALID);
-  if (!el) return;
-  el.textContent = '';
-  el.classList.remove('is-visible');
-}
-
-/* ── HISTORY ──────────────────────────────────────────────────────────────── */
-
-function initHistorySection() {
-  document.getElementById(IDS.CLEAR_HISTORY)?.addEventListener('click', () => {
-    clearHistory();
-    renderHistory();
-    showToast('History cleared.', 'info', 2000);
-  });
-}
-
-/* ── STATE LISTENER ───────────────────────────────────────────────────────── */
-
-function initStateListener() {
-  on(EVENTS.STATE_CHANGED, ({ detail }) => {
-    const { changed, next } = detail;
-    if (changed.includes('dataLoaded') && next.dataLoaded) {
-      highlight(document.getElementById(IDS.STEP2));
+  card.addEventListener('dragleave', () => card.classList.remove('is-dragover'));
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    card.classList.remove('is-dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      _handleFile(type, e.dataTransfer.files[0]);
     }
   });
+
+  // File selection
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length) {
+      _handleFile(type, e.target.files[0]);
+    }
+    fileInput.value = ''; // reset
+  });
+
+  // Paste toggle
+  if (pasteToggle && textarea) {
+    pasteToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      textarea.style.display = 'block';
+      textarea.focus();
+      pasteToggle.style.display = 'none';
+      if (window.gsap) gsap.fromTo(textarea, {opacity: 0, y: -10}, {opacity: 1, y: 0, duration: 0.3});
+    });
+    textarea.addEventListener('input', _checkAnalyzeButton);
+  }
+
+  // Remove file
+  if (removeBtn) {
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (textarea) textarea.value = '';
+      card.classList.remove('is-loaded', 'is-uploading', 'is-error');
+      _checkAnalyzeButton();
+    });
+  }
+}
+
+async function _handleFile(type, file) {
+  const card = document.getElementById(`${type}UploadCard`);
+  const fileName = document.getElementById(`${type}FileName`);
+  const fileSize = document.getElementById(`${type}FileSize`);
+  const progressFill = document.getElementById(`${type}ProgressFill`);
+  const textarea = document.getElementById(`${type}Textarea`);
+
+  if (card) {
+    card.classList.remove('is-loaded', 'is-error');
+    card.classList.add('is-uploading');
+  }
+  if (fileName) fileName.textContent = file.name;
+  if (fileSize) fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+  if (progressFill) progressFill.style.width = '0%';
+
+  try {
+    const res = await uploadFile(type, file, (pct) => {
+      if (progressFill) progressFill.style.width = pct + '%';
+    });
+
+    if (textarea) {
+      textarea.value = res.extracted_text || '';
+    }
+
+    if (card) {
+      card.classList.remove('is-uploading');
+      card.classList.add('is-loaded');
+    }
+    
+    _checkAnalyzeButton();
+  } catch (err) {
+    console.error('Upload error', err);
+    if (card) {
+      card.classList.remove('is-uploading');
+      card.classList.add('is-error');
+    }
+    showToast(`Failed to upload ${file.name}`, 'error');
+  }
+}
+
+function _checkAnalyzeButton() {
+  const resume = document.getElementById('resumeTextarea')?.value.trim();
+  const jd = document.getElementById('jdTextarea')?.value.trim();
+  const btn = document.getElementById('runAnalysisBtn');
+  const startBtn = document.getElementById('startAnalysisBtn');
+  const hint = document.getElementById('analyseCTAHint');
+
+  const ready = !!(resume && jd);
+  if (btn) btn.disabled = !ready;
+  if (hint) hint.style.opacity = ready ? '0' : '1';
+  
+  if (startBtn) {
+    startBtn.onclick = () => {
+      if (ready) btn.click();
+      else document.getElementById('uploadHeading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  }
+}
+
+// ── ATS Analysis Flow ──
+function initAnalysisFlow() {
+  const runBtn = document.getElementById('runAnalysisBtn');
+  if (runBtn) runBtn.addEventListener('click', _runAnalysis);
+  
+  const startBtn = document.getElementById('startAnalysisBtn');
+  if (startBtn) startBtn.addEventListener('click', () => {
+     document.getElementById('uploadHeading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+async function _runAnalysis() {
+  const resumeText = document.getElementById('resumeTextarea')?.value.trim();
+  const jdText = document.getElementById('jdTextarea')?.value.trim();
+
+  if (!resumeText || !jdText) {
+    showToast('Please upload or paste both resume and job description.', 'error');
+    return;
+  }
+
+  const overlay = document.getElementById('analyzeOverlay');
+  const overlayMsg = document.getElementById('overlayMsg');
+  const overlaySub = document.getElementById('overlaySub');
+  
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+    if (window.gsap) gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+  }
+
+  try {
+    if (overlayMsg) overlayMsg.textContent = 'Storing vectors in ChromaDB...';
+    if (overlaySub) overlaySub.textContent = 'Preparing embeddings for semantic scoring';
+    await loadData(resumeText, jdText);
+
+    if (overlayMsg) overlayMsg.textContent = 'Running semantic ATS scoring...';
+    if (overlaySub) overlaySub.textContent = 'Evaluating keyword match, skill coverage, and quantifiable impact';
+    const atsData = await getATSScore(resumeText, jdText);
+
+    const atsSection = document.getElementById('atsDashboardSection');
+    const atsContainer = document.getElementById('atsDashboard');
+
+    if (atsSection && atsContainer) {
+      atsSection.style.display = 'block';
+      renderATSDashboard(atsContainer, atsData);
+      
+      // Update nav active state to ATS
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const atsNav = document.querySelector('.nav-item[data-view="ats"]');
+      if(atsNav) atsNav.classList.add('active');
+
+      setTimeout(() => {
+        atsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+    
+    showToast('Analysis complete!', 'success');
+
+  } catch (err) {
+    console.error('Analysis failed', err);
+    showToast(err.message || 'Analysis failed', 'error');
+  } finally {
+    if (overlay) {
+      if (window.gsap) {
+        gsap.to(overlay, { opacity: 0, duration: 0.3, onComplete: () => {
+          overlay.style.display = 'none';
+          overlay.setAttribute('aria-hidden', 'true');
+        }});
+      } else {
+        overlay.style.display = 'none';
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
 }

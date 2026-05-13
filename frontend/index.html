@@ -26,289 +26,356 @@
     type="text/javascript"
   ></script>
 
-  <!-- Styles -->
+    <!-- Styles -->
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="stylesheet" href="styles/themes.css" />
-  <link rel="stylesheet" href="styles/layout.css" />
   <link rel="stylesheet" href="styles/components.css" />
-  <link rel="stylesheet" href="styles/animations.css" />
   <link rel="stylesheet" href="styles/auth.css" />
-  <link rel="stylesheet" href="styles/ats-dashboard.css" />
   <link rel="stylesheet" href="styles/glassmorphism.css" />
-  <link rel="stylesheet" href="styles/premium-animations.css" />
+  <link rel="stylesheet" href="styles/dashboard.css" />
+  <link rel="stylesheet" href="styles/ats-dashboard.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
 </head>
 <body data-theme="light">
-
-  <!-- ░░░ GRAIN TEXTURE ░░░ -->
+ 
+  <!-- GRAIN -->
   <div class="grain" aria-hidden="true"></div>
-
-  <!-- ░░░ AUTH BOOT LOADER ░░░
-       Shown while Clerk SDK initializes. Hides once auth state is known. -->
+ 
+  <!-- AUTH BOOT LOADER -->
   <div id="authLoader" class="auth-loader" aria-live="polite" aria-label="Loading authentication">
     <div class="auth-loader__inner">
       <div class="auth-loader__ring-wrap">
         <svg viewBox="0 0 80 80" fill="none" class="auth-loader__ring">
           <circle cx="40" cy="40" r="34" stroke="var(--border)" stroke-width="3"/>
-          <circle cx="40" cy="40" r="34"
-                  stroke="url(#authArcGrad)" stroke-width="3"
-                  stroke-linecap="round" stroke-dasharray="70 144"
-                  class="auth-loader__arc"/>
+          <circle cx="40" cy="40" r="34" stroke="url(#authGrad)" stroke-width="3"
+                  stroke-linecap="round" stroke-dasharray="70 144" class="auth-loader__arc"/>
           <defs>
-            <linearGradient id="authArcGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-              <stop offset="0%"   stop-color="var(--accent)"/>
+            <linearGradient id="authGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="var(--accent)"/>
               <stop offset="100%" stop-color="var(--accent2)"/>
             </linearGradient>
           </defs>
         </svg>
-        <span class="auth-loader__letter">R</span>
+        <span class="auth-loader__letter">V</span>
       </div>
       <p class="auth-loader__msg" id="authLoaderMsg">Initializing session…</p>
-      <div class="auth-loader__dots">
-        <span></span><span></span><span></span>
-      </div>
+      <div class="auth-loader__dots"><span></span><span></span><span></span></div>
     </div>
   </div>
-
-  <!-- ░░░ AUTH SCREEN ░░░
-       Shown when user is NOT authenticated. Hidden when signed in.
-       CSS default is display:none — JS sets display:flex to reveal. -->
-  <div id="authScreen" class="auth-screen" aria-label="Authentication">
-    <!-- auth card injected here by authUI.renderLoginCard() -->
-  </div>
-
-  <!-- ░░░ MAIN APPLICATION ░░░
-       Hidden until authentication is confirmed. -->
-  <div id="mainApp" style="display:none;">
-
-    <!-- RAG ANALYZE OVERLAY -->
-    <div id="analyzeOverlay" class="overlay" aria-hidden="true" aria-modal="true" role="dialog">
-      <div class="overlay__inner">
+ 
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="auth-screen" aria-label="Authentication"></div>
+ 
+  <!-- ══════════════════════════════════════════════════════════
+       MAIN APP SHELL
+  ══════════════════════════════════════════════════════════ -->
+  <div id="mainApp" class="app-shell" style="display:none;">
+ 
+    <!-- ░░ SIDEBAR ░░ -->
+    <aside class="sidebar" id="sidebar" aria-label="Navigation">
+      <div class="sidebar__brand">
+        <span class="sidebar__logo">Vectra<em>AI</em></span>
+        <span class="sidebar__tagline">Pro · Resume Intelligence</span>
+      </div>
+ 
+      <nav class="sidebar__nav" aria-label="Main navigation">
+        <div class="sidebar__section-label">Platform</div>
+ 
+        <button class="nav-item active" data-view="dashboard" aria-current="page">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="7" height="7" rx="2"/>
+            <rect x="10" y="1" width="7" height="7" rx="2"/>
+            <rect x="1" y="10" width="7" height="7" rx="2"/>
+            <rect x="10" y="10" width="7" height="7" rx="2"/>
+          </svg>
+          <span class="nav-item__label">Dashboard</span>
+        </button>
+ 
+        <button class="nav-item" data-view="ats">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="9" r="7"/>
+            <path d="M9 5v4l3 2" stroke-linecap="round"/>
+          </svg>
+          <span class="nav-item__label">ATS Analysis</span>
+          <span class="nav-item__badge">New</span>
+        </button>
+ 
+        <button class="nav-item" data-view="optimizer">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 9h12M9 3l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="nav-item__label">Resume Optimizer</span>
+        </button>
+ 
+        <button class="nav-item" data-view="ai">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 2c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z"/>
+            <path d="M9 6v3l2 2" stroke-linecap="round"/>
+          </svg>
+          <span class="nav-item__label">AI Suggestions</span>
+        </button>
+ 
+        <div class="sidebar__section-label" style="margin-top:8px;">Account</div>
+ 
+        <button class="nav-item" data-view="history">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2H6L2 6v8a2 2 0 002 2h10a2 2 0 002-2V6l-4-4z"/>
+            <path d="M6 2v4h6V2" stroke-linecap="round"/>
+          </svg>
+          <span class="nav-item__label">History</span>
+        </button>
+ 
+        <button class="nav-item" data-view="settings">
+          <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="9" r="2.5"/>
+            <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.22 3.22l1.42 1.42M13.36 13.36l1.42 1.42M3.22 14.78l1.42-1.42M13.36 4.64l1.42-1.42"/>
+          </svg>
+          <span class="nav-item__label">Settings</span>
+        </button>
+      </nav>
+ 
+      <div class="sidebar__footer">
+        <div class="sidebar__status-row" id="sidebarStatus">
+          <span class="status-badge status-badge--disconnected" id="apiStatusBadge">
+            <span class="status-badge__dot"></span>
+            <span id="apiStatusText">Connecting…</span>
+          </span>
+        </div>
+      </div>
+    </aside>
+ 
+    <!-- ░░ TOP BAR ░░ -->
+    <header class="topbar" id="topbar" aria-label="Top navigation">
+      <div class="topbar__left">
+        <div class="topbar__page-title" id="topbarTitle">Dashboard</div>
+      </div>
+      <div class="topbar__right">
+        <!-- User pill injected by authUI -->
+        <div id="userPillContainer"></div>
+        <!-- Theme toggle -->
+        <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
+          <svg class="icon-sun" width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M7.5 1v1.5M7.5 12.5V14M1 7.5h1.5M12.5 7.5H14M2.9 2.9l1 1M11.1 11.1l1 1M2.9 12.1l1-1M11.1 3.9l1-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none" style="display:none">
+            <path d="M13 10A6 6 0 014.8 2a6.5 6.5 0 108.2 8z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+ 
+    <!-- ░░ MAIN CONTENT ░░ -->
+    <main class="main-content" id="mainContent" aria-label="Main content">
+ 
+      <!-- ANALYZE OVERLAY -->
+      <div id="analyzeOverlay" class="overlay" aria-hidden="true">
         <div class="overlay__ring-wrap">
-          <svg class="overlay__ring" viewBox="0 0 120 120" fill="none">
-            <circle cx="60" cy="60" r="54" stroke="var(--border)" stroke-width="3"/>
-            <circle class="overlay__arc" cx="60" cy="60" r="54"
-                    stroke="url(#arcGrad)" stroke-width="3"
-                    stroke-linecap="round" stroke-dasharray="100 240"/>
+          <svg class="overlay__ring" viewBox="0 0 80 80" fill="none">
+            <circle cx="40" cy="40" r="34" stroke="var(--border)" stroke-width="3"/>
+            <circle cx="40" cy="40" r="34" stroke="url(#overlayGrad)" stroke-width="3"
+                    stroke-linecap="round" stroke-dasharray="80 134" class="overlay__arc"/>
             <defs>
-              <linearGradient id="arcGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-                <stop offset="0%"   stop-color="var(--accent)"/>
+              <linearGradient id="overlayGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="var(--accent)"/>
                 <stop offset="100%" stop-color="var(--accent2)"/>
               </linearGradient>
             </defs>
           </svg>
-          <div class="overlay__glow"></div>
-          <div class="overlay__logo">R</div>
+          <div class="overlay__logo">V</div>
         </div>
-        <p class="overlay__msg" id="overlayMsg">Initializing AI…</p>
-        <p class="overlay__cold" id="overlayCold">Server waking up (cold start)… please wait</p>
-        <div class="overlay__dots">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="overlay__progress-wrap">
-          <div class="overlay__progress-bar" id="overlayProgressBar"></div>
-        </div>
+        <p class="overlay__msg" id="overlayMsg">Running ATS analysis…</p>
+        <p class="overlay__sub" id="overlaySub">Semantic scoring in progress</p>
+        <div class="overlay__dots"><span></span><span></span><span></span></div>
       </div>
-    </div>
-
-    <!-- HEADER -->
-    <header class="header" id="header">
-      <div class="container header__inner">
-        <div class="logo">
-          <span class="logo__mark">Resume<em>RAG</em></span>
-          <span class="logo__badge">v2.0</span>
-        </div>
-        <nav class="header__nav" aria-label="Header navigation">
-          <!-- User pill injected here by authUI.renderUserPill() -->
-          <div id="userPillContainer"></div>
-
-          <!-- Theme toggle -->
-          <button class="btn btn--ghost btn--sm btn--icon" id="themeBtn" aria-label="Toggle dark mode">
-            <svg class="icon-sun" width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1 1M10.4 10.4l1 1M2.6 11.4l1-1M10.4 3.6l1-1"
-                    stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            </svg>
-            <svg class="icon-moon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:none">
-              <path d="M12 9.3A6 6 0 014.7 2a6 6 0 107.3 7.3z"
-                    stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </nav>
-      </div>
-    </header>
-
-    <!-- HERO -->
-    <section class="hero" id="hero" aria-labelledby="heroTitle">
-      <div class="container">
-        <p class="hero__eyebrow" id="heroEyebrow">
-          <span class="hero__eyebrow-line"></span>
-          AI · RAG · Endee Vector DB · Groq LLM
-        </p>
-        <h1 class="hero__title" id="heroTitle">
-          Your career intelligence,<br/><em>analysed instantly.</em>
-        </h1>
-        <p class="hero__sub" id="heroSub">
-          Paste your resume and a job description. Ask anything. The RAG pipeline retrieves
-          semantically relevant context from Endee and routes it through Groq for structured,
-          actionable career feedback.
-        </p>
-      </div>
-    </section>
-
-    <!-- STEP BAR -->
-    <nav class="steps-bar" id="stepsBar" aria-label="Progress steps">
-      <div class="container steps-bar__inner">
-        <button class="step active" id="step1" data-step="1" data-target="inputSection" aria-current="step">
-          <span class="step__num">1</span>
-          <span class="step__label">Load Data</span>
-        </button>
-        <span class="step__sep" aria-hidden="true"></span>
-        <button class="step" id="step2" data-step="2" data-target="analyzeSection">
-          <span class="step__num">2</span>
-          <span class="step__label">Analyze</span>
-        </button>
-        <span class="step__sep" aria-hidden="true"></span>
-        <button class="step" id="step3" data-step="3" data-target="resultArea">
-          <span class="step__num">3</span>
-          <span class="step__label">Results</span>
-        </button>
-      </div>
-    </nav>
-
-    <!-- INPUT SECTION -->
-    <section id="inputSection" aria-label="Input data">
-      <div class="input-grid">
-        <div class="panel" id="resumePanel">
-          <div class="panel__label">
-            Input 01
-            <span class="panel__tag panel__tag--resume">type: resume</span>
-          </div>
-          <textarea id="resumeText" class="panel__textarea"
-            placeholder="Paste your resume text here…&#10;&#10;Include: work experience, skills, education, projects, certifications."
-            aria-label="Resume text" spellcheck="false"></textarea>
-          <div class="panel__footer">
-            <span class="char-count" id="resumeCount">0 words</span>
-            <button class="panel__clear" id="resumeClear" aria-label="Clear resume" title="Clear">✕</button>
+ 
+      <!-- ── DASHBOARD VIEW ──────────────────────────────────────────── -->
+      <div id="view-dashboard" class="view">
+ 
+        <!-- Hero card -->
+        <div class="hero-card" id="heroCard">
+          <div class="hero-card__text">
+            <p class="hero-card__eyebrow">AI · Semantic Analysis · ATS Intelligence</p>
+            <h1 class="hero-card__title">AI Resume Intelligence<br/>Platform</h1>
+            <p class="hero-card__subtitle">
+              Optimize your resume for ATS systems using semantic embeddings,
+              RAG-powered gap analysis, and actionable AI recommendations.
+            </p>
+            <div class="hero-card__actions">
+              <button class="btn-primary" id="startAnalysisBtn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Start Analysis
+              </button>
+              <button class="btn-secondary" id="viewDocsBtn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 3h10M2 7h7M2 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                How It Works
+              </button>
+            </div>
           </div>
         </div>
-
-        <div class="panel" id="jobPanel">
-          <div class="panel__label">
-            Input 02
-            <span class="panel__tag panel__tag--job">type: job</span>
+ 
+        <!-- Upload section -->
+        <div class="section-heading" id="uploadHeading">Upload Documents</div>
+        <div class="upload-grid" id="uploadGrid">
+ 
+          <!-- Resume card -->
+          <div class="upload-card" id="resumeUploadCard"
+               tabindex="0" aria-label="Upload resume" role="button">
+            <div class="upload-card__header">
+              <div class="upload-card__icon upload-card__icon--resume">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 2H4a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8l-6-6z"/>
+                  <path d="M10 2v6h6"/>
+                </svg>
+              </div>
+              <div>
+                <div class="upload-card__title">Resume</div>
+                <div class="upload-card__formats">PDF · DOCX · TXT</div>
+              </div>
+            </div>
+ 
+            <div class="upload-card__drop-area" id="resumeDropArea">
+              <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M14 18V8M10 12l4-4 4 4"/>
+                <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
+              </svg>
+              <div class="upload-card__drop-text">Drop resume here</div>
+              <div class="upload-card__drop-sub">
+                or <button class="upload-card__browse" id="resumeBrowseBtn" type="button">browse files</button>
+              </div>
+            </div>
+ 
+            <div class="upload-card__loaded" id="resumeLoaded">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
+                <circle cx="8" cy="8" r="7"/>
+                <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="upload-card__file-name" id="resumeFileName">—</span>
+              <span class="upload-card__file-size" id="resumeFileSize"></span>
+              <button class="upload-card__remove" id="resumeRemoveBtn" aria-label="Remove file">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 2l9 9M11 2l-9 9"/>
+                </svg>
+              </button>
+            </div>
+ 
+            <div class="upload-card__progress" id="resumeProgress">
+              <div class="upload-card__progress-fill" id="resumeProgressFill"></div>
+            </div>
+ 
+            <button class="upload-card__paste-toggle" id="resumePasteToggle" type="button">
+              Paste text manually instead
+            </button>
+            <textarea
+              class="upload-card__textarea" id="resumeTextarea"
+              placeholder="Paste resume text here…"
+              aria-label="Resume text"
+            ></textarea>
+ 
+            <input type="file" id="resumeFileInput" accept=".pdf,.docx,.doc,.txt" hidden />
           </div>
-          <textarea id="jobText" class="panel__textarea"
-            placeholder="Paste the job description here…&#10;&#10;Include: requirements, responsibilities, tech stack, company context."
-            aria-label="Job description text" spellcheck="false"></textarea>
-          <div class="panel__footer">
-            <span class="char-count" id="jobCount">0 words</span>
-            <button class="panel__clear" id="jobClear" aria-label="Clear job description" title="Clear">✕</button>
+ 
+          <!-- Job Description card -->
+          <div class="upload-card" id="jdUploadCard"
+               tabindex="0" aria-label="Upload job description" role="button">
+            <div class="upload-card__header">
+              <div class="upload-card__icon upload-card__icon--jd">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="2" width="14" height="14" rx="2"/>
+                  <path d="M5 6h8M5 9h6M5 12h4"/>
+                </svg>
+              </div>
+              <div>
+                <div class="upload-card__title">Job Description</div>
+                <div class="upload-card__formats">PDF · DOCX · TXT</div>
+              </div>
+            </div>
+ 
+            <div class="upload-card__drop-area" id="jdDropArea">
+              <svg class="upload-card__drop-icon" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M14 18V8M10 12l4-4 4 4"/>
+                <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
+              </svg>
+              <div class="upload-card__drop-text">Drop job description here</div>
+              <div class="upload-card__drop-sub">
+                or <button class="upload-card__browse" id="jdBrowseBtn" type="button">browse files</button>
+              </div>
+            </div>
+ 
+            <div class="upload-card__loaded" id="jdLoaded">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="1.5">
+                <circle cx="8" cy="8" r="7"/>
+                <path d="M5 8l2.5 2.5L11 5.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="upload-card__file-name" id="jdFileName">—</span>
+              <span class="upload-card__file-size" id="jdFileSize"></span>
+              <button class="upload-card__remove" id="jdRemoveBtn" aria-label="Remove file">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 2l9 9M11 2l-9 9"/>
+                </svg>
+              </button>
+            </div>
+ 
+            <div class="upload-card__progress" id="jdProgress">
+              <div class="upload-card__progress-fill" id="jdProgressFill"></div>
+            </div>
+ 
+            <button class="upload-card__paste-toggle" id="jdPasteToggle" type="button">
+              Paste text manually instead
+            </button>
+            <textarea
+              class="upload-card__textarea" id="jdTextarea"
+              placeholder="Paste job description here…"
+              aria-label="Job description text"
+            ></textarea>
+ 
+            <input type="file" id="jdFileInput" accept=".pdf,.docx,.doc,.txt" hidden />
           </div>
         </div>
-      </div>
-
-      <div class="action-bar" id="loadBar">
-        <div class="container action-bar__inner">
-          <button class="btn btn--accent" id="loadBtn">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
-                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Load into Endee
-          </button>
-          <button class="btn btn--ghost btn--sm" id="demoBtn">Fill demo data</button>
-          <button class="btn btn--ghost btn--sm" id="clearAllBtn">Clear all</button>
-          <div class="load-status" id="loadStatus" role="status" aria-live="polite"></div>
-          <div class="chunk-chips" id="chunkChips" aria-live="polite"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ANALYZE SECTION -->
-    <section class="analyze-section" id="analyzeSection" aria-label="Ask the AI">
-      <div class="container">
-        <div class="analyze-section__header">
-          <h2 class="analyze-section__title">Ask the AI</h2>
-          <p class="analyze-section__desc">
-            Powered by RAG — semantic retrieval from Endee + Groq LLM generation
+ 
+        <!-- Analyse CTA -->
+        <div class="analyse-cta-row" id="analyseCTARow">
+          <p class="analyse-cta-row__hint" id="analyseCTAHint">
+            Upload both documents to run ATS analysis
           </p>
-        </div>
-        <div class="question-pills" id="questionPills" role="group" aria-label="Preset questions"></div>
-        <div class="question-row">
-          <div class="question-input-wrap">
-            <label class="question-input-wrap__label" for="questionInput">Custom question</label>
-            <input class="question-input" id="questionInput" type="text"
-                   placeholder="e.g. What interview topics should I prepare for?"
-                   aria-label="Custom question" autocomplete="off" />
-            <span class="question-input__validation" id="questionValidation" aria-live="polite"></span>
-          </div>
-          <button class="btn btn--primary" id="analyzeBtn">
+          <button class="btn-primary" id="runAnalysisBtn" disabled>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M13 7A6 6 0 111 7a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.5"/>
               <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            Analyze
+            Run ATS Analysis
           </button>
         </div>
-      </div>
-    </section>
-
-    <!-- RESULT AREA -->
-    <div class="result-area" id="resultArea" aria-live="polite" aria-label="Analysis results">
-      <div class="container">
-        <div class="result-empty" id="resultEmpty">
-          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
-            <rect x="8" y="8" width="40" height="40" rx="2" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M16 20h24M16 27h18M16 34h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <circle cx="41" cy="41" r="9" fill="var(--bg)" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M38 41h6M41 38v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <p>Load your data, then ask a question above.</p>
+ 
+        <!-- ATS Dashboard (rendered here after analysis) -->
+        <div id="atsDashboardSection" style="display:none;">
+          <div class="section-heading">ATS Intelligence Report</div>
+          <div id="atsDashboard"></div>
         </div>
-        <div id="resultCard"></div>
-      </div>
-    </div>
-
-    <!-- ATS DASHBOARD SECTION -->
-    <section id="atsDashboardSection" class="ats-section container" style="display:none;">
-      <div id="atsDashboard"></div>
-    </section>
-
-    <!-- HISTORY -->
-    <section class="history-section" id="historySection" style="display:none;" aria-label="Query history">
-      <div class="container">
-        <div class="history-section__header">
-          <h3 class="history-section__title">
-            Query History
-            <span class="history-section__badge" id="historyCount">0</span>
-          </h3>
-          <button class="btn btn--ghost btn--sm" id="clearHistoryBtn">Clear history</button>
-        </div>
-        <div class="history-list" id="historyList" role="list"></div>
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer" aria-label="Footer">
-      <div class="container footer__inner">
-        <p class="footer__copy">ResumeRAG — AI Career Intelligence</p>
-        <div class="footer__tech" aria-label="Tech stack">
-          <span class="tech-pill">FastAPI</span>
-          <span class="tech-pill">SentenceTransformers</span>
-          <span class="tech-pill">Endee VectorDB</span>
-          <span class="tech-pill">Groq LLM</span>
-          <span class="tech-pill">RAG</span>
-        </div>
-      </div>
-    </footer>
-
+ 
+      </div><!-- /view-dashboard -->
+ 
+      <!-- ── PLACEHOLDER VIEWS ───────────────────────────────────────── -->
+      <div id="view-ats"       class="view" style="display:none;"></div>
+      <div id="view-optimizer" class="view" style="display:none;"></div>
+      <div id="view-ai"        class="view" style="display:none;"></div>
+      <div id="view-history"   class="view" style="display:none;"></div>
+      <div id="view-settings"  class="view" style="display:none;"></div>
+ 
+    </main><!-- /main-content -->
+ 
   </div><!-- /mainApp -->
-
-  <!-- TOAST CONTAINER (outside mainApp so it shows on auth screen too) -->
+ 
+  <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"
        role="region" aria-live="assertive" aria-label="Notifications"></div>
-
-  <!-- ES Module entry -->
+ 
+  <!-- ES Modules -->
   <script type="module" src="scripts/main.js"></script>
 </body>
 </html>

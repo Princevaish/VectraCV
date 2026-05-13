@@ -1,93 +1,68 @@
 // frontend/scripts/api/apiService.js
-// All HTTP communication with the VectraAI Pro FastAPI backend.
-// Uses CONFIG.API_BASE_URL — no runtime DOM reads, no dev UI dependency.
+// All HTTP communication with the FastAPI backend.
 
 import { CONFIG } from '../../config/config.js';
 import { sleep } from '../utils/helpers.js';
 
-/**
- * Core fetch wrapper with timeout, retry, and structured error handling.
- * @param {string} path
- * @param {RequestInit} opts
- * @param {number} retries
- * @returns {Promise<any>}
- */
 async function request(path, opts = {}, retries = CONFIG.MAX_RETRIES) {
   const url        = `${CONFIG.API_BASE_URL}${path}`;
   const controller = new AbortController();
 
-  const timeout = setTimeout(
-    () => controller.abort(),
-    CONFIG.REQUEST_TIMEOUT_MS
-  );
+  const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
 
   try {
     const res = await fetch(url, {
       ...opts,
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts.headers || {}),
-      },
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     });
 
     clearTimeout(timeout);
 
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
-      try {
-        const errBody = await res.json();
-        detail = errBody.detail || detail;
-      } catch (_) { /* ignore */ }
+      try { const b = await res.json(); detail = b.detail || detail; } catch (_) {}
       throw new ApiError(detail, res.status);
     }
 
     return await res.json();
-
   } catch (err) {
     clearTimeout(timeout);
-
     if (retries > 0 && !(err instanceof ApiError)) {
       await sleep(CONFIG.RETRY_DELAY_MS);
       return request(path, opts, retries - 1);
     }
-
     throw err;
   }
 }
 
-/* ── RAG Endpoints ──────────────────────────────────────────────────────────── */
+// ── Legacy RAG endpoints ──────────────────────────────────────────────────────
 
-/**
- * POST /api/load-data — Ingest resume + JD into ChromaDB
- * @param {string} resume
- * @param {string} job_description
- */
 export async function loadData(resume, job_description) {
-  return request('/api/load-data', {
+  return request('/load-data', {
     method: 'POST',
     body: JSON.stringify({ resume, job_description }),
   });
 }
 
-/**
- * POST /api/analyze — RAG Q&A
- * @param {string} question
- */
 export async function analyze(question) {
-  return request('/api/analyze', {
+  return request('/analyze', {
     method: 'POST',
     body: JSON.stringify({ question }),
   });
 }
 
-/* ── ATS Endpoints ──────────────────────────────────────────────────────────── */
+export async function ping() {
+  return request('/health', { method: 'GET' }, 0);
+}
+
+// ── ATS endpoint ──────────────────────────────────────────────────────────────
 
 /**
- * POST /api/ats-score — Full ATS scoring pipeline
+ * POST /api/ats-score
  * @param {string} resume_text
  * @param {string} job_description
- * @returns {Promise<ATSScoreResponse>}
+ * @returns {Promise<ATSResponse>}
  */
 export async function getATSScore(resume_text, job_description) {
   return request('/api/ats-score', {
@@ -96,76 +71,58 @@ export async function getATSScore(resume_text, job_description) {
   });
 }
 
-/* ── Upload Endpoints ───────────────────────────────────────────────────────── */
+// ── Upload endpoints (multipart) ──────────────────────────────────────────────
 
 /**
- * POST /api/upload/resume — Upload PDF/DOCX resume
+ * Upload a file. Returns { status, filename, char_count, preview }.
+ * @param {'resume'|'jd'} type
  * @param {File} file
- * @returns {Promise<UploadResponse>}
+ * @param {(pct: number) => void} onProgress
  */
-export async function uploadResume(file) {
-  return _uploadFile('/api/upload/resume', file);
-}
+export function uploadFile(type, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const url = `${CONFIG.API_BASE_URL}/api/upload/${type}`;
+    const xhr  = new XMLHttpRequest();
+    const form = new FormData();
+    form.append('file', file);
 
-/**
- * POST /api/upload/jd — Upload PDF/DOCX job description
- * @param {File} file
- * @returns {Promise<UploadResponse>}
- */
-export async function uploadJD(file) {
-  return _uploadFile('/api/upload/jd', file);
-}
+    xhr.open('POST', url);
 
-async function _uploadFile(path, file) {
-  const url = `${CONFIG.API_BASE_URL}${path}`;
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000); // 60s for uploads
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-      // Do NOT set Content-Type — browser sets multipart/form-data with boundary
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
     });
-    clearTimeout(timeout);
 
-    if (!res.ok) {
-      let detail = `HTTP ${res.status}`;
-      try {
-        const errBody = await res.json();
-        detail = errBody.detail || detail;
-      } catch (_) { /* ignore */ }
-      throw new ApiError(detail, res.status);
-    }
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch { resolve({ status: 'ok' }); }
+      } else {
+        try {
+          const body = JSON.parse(xhr.responseText);
+          reject(new ApiError(body.detail || `HTTP ${xhr.status}`, xhr.status));
+        } catch {
+          reject(new ApiError(`HTTP ${xhr.status}`, xhr.status));
+        }
+      }
+    });
 
-    return await res.json();
-  } catch (err) {
-    clearTimeout(timeout);
-    throw err;
-  }
-}
+    xhr.addEventListener('error', () => reject(new ApiError('Network error', 0)));
+    xhr.addEventListener('abort', () => reject(new ApiError('Upload aborted', 0)));
 
-/* ── Utility ────────────────────────────────────────────────────────────────── */
-
-/**
- * GET /api/health — Liveness probe
- */
-export async function ping() {
-  return request('/api/health', { method: 'GET' }, 0);
+    xhr.send(form);
+  });
 }
 
 /**
- * GET /api/stats — ChromaDB collection stats
+ * GET /api/upload/status
  */
-export async function getStats() {
-  return request('/api/stats', { method: 'GET' }, 0);
+export async function getUploadStatus() {
+  return request('/api/upload/status', { method: 'GET' }, 0);
 }
 
-/* ── ApiError ───────────────────────────────────────────────────────────────── */
+// ── Error class ───────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
   constructor(message, status = 0) {
