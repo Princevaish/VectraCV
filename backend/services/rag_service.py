@@ -22,17 +22,18 @@ logger = get_logger(__name__)
 
 RAG_PROMPT_TEMPLATE = """You are an expert AI career coach powered by VectraAI Pro.
 
-Using the following context from a resume and job description:
+Using ONLY the following context from the currently uploaded resume and job description:
 
 {context}
 
 Answer the question: {question}
 
-Provide structured, actionable career intelligence:
-1. Match analysis
-2. Missing skills or gaps
-3. Specific improvement suggestions
-4. Final verdict with confidence level"""
+IMPORTANT RULES:
+- Answer ONLY using the provided resume and job description context.
+- DO NOT invent or assume any skills, experiences, or technologies not present in the context.
+- If the context lacks information to answer the question, state that clearly.
+- Provide structured, actionable career intelligence.
+- If asking about fit, base it solely on the provided text."""
 
 
 def run_rag(question: str) -> Dict[str, Any]:
