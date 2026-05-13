@@ -6,6 +6,7 @@ import { initClerk, AUTH_EVENTS, signOut, getUserEmail, getUserName, getUserAvat
 import { showAuthLoader, hideAuthLoader, renderLoginCard, renderUserPill, clearUserPill, transitionToApp, transitionToAuth } from './auth/authUI.js';
 import { showToast } from './components/toast.js';
 import { renderATSDashboard } from './components/atsDashboard.js';
+import { initChatInterface } from './components/chatInterface.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
@@ -54,6 +55,7 @@ function _bootMainApp() {
   initTheme();
   initUploaders();
   initAnalysisFlow();
+  initChatInterface();
 
   if (window.gsap) {
     gsap.from('#mainContent', { opacity: 0, y: 15, duration: 0.5, ease: 'power2.out', delay: 0.2 });
@@ -82,7 +84,7 @@ function initSidebar() {
       } 
       
       // Toggle Views (SaaS routing behavior)
-      if (['ai', 'history', 'optimizer', 'settings'].includes(targetView)) {
+      if (['ai', 'history', 'optimizer', 'settings', 'chat'].includes(targetView)) {
         views.forEach(v => v.style.display = 'none');
         const viewEl = document.getElementById(`view-${targetView}`);
         if (viewEl) viewEl.style.display = 'block';
