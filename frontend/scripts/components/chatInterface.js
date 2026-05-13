@@ -16,7 +16,7 @@ export function initChatInterface() {
   renderInitialState();
 
   // Listen to state changes to enable chat
-  window.addEventListener('STATE_CHANGED', (e) => {
+  window.addEventListener('app:stateChanged', (e) => {
     if (e.detail?.changed?.includes('dataLoaded')) {
       renderInitialState();
     }

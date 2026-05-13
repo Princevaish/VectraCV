@@ -1,3 +1,9 @@
+# Chroma vector database
+backend/db/chroma/
+
+# SQLite
+*.sqlite3
+
 # Python
 .venv/
 __pycache__/
