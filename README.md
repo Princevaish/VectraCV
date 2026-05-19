@@ -1,4 +1,4 @@
-# AI Resume Analyser — FastAPI + Endee + Groq RAG Backend
+# AI Resume Analyser — FastAPI + Chroma + Groq RAG Backend
 
 ## Project Structure
 
