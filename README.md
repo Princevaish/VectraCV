@@ -14,7 +14,7 @@ backend/
 │
 ├── services/
 │   ├── embedding_service.py # SentenceTransformer wrapper
-│   ├── vector_service.py    # Endee vector DB integration
+│   ├── vector_service.py    # Chroma vector DB integration
 │   ├── rag_service.py       # RAG pipeline (retrieve → prompt → generate)
 │   └── llm_service.py       # Groq API client (OpenAI-compatible)
 │
