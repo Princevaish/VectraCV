@@ -6,9 +6,11 @@ from fastapi import APIRouter
 from api.routes.ats import router as ats_router
 from api.routes.rag import router as rag_router
 from api.routes.upload import router as upload_router
+from api.routes.optimizer import router as optimizer_router
 
 router = APIRouter(prefix="/api")
 
 router.include_router(ats_router)
 router.include_router(rag_router)
 router.include_router(upload_router)
+router.include_router(optimizer_router)
