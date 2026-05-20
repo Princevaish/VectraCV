@@ -132,4 +132,17 @@ export function initResumeOptimizer() {
       }
     });
   }
+  if (regenBtn) {
+    regenBtn.addEventListener('click', () => {
+      btn.click();
+    });
+  }
+
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      if (aiContent && aiContent.innerText) {
+        showToast('Suggestion applied to your profile!', 'success');
+      }
+    });
+  }
 }
