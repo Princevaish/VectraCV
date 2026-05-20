@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ResumeRAG — AI Career Intelligence</title>
+  <title>VectraAI Pro — AI Resume Intelligence Platform</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="styles/dashboard.css" />
   <link rel="stylesheet" href="styles/ats-dashboard.css" />
   <link rel="stylesheet" href="styles/animations.css" />
+  <link rel="stylesheet" href="styles/ai-suggestions.css" />
 </head>
 <body data-theme="light">
  
@@ -407,11 +408,15 @@
           </svg>
           AI Resume Suggestions
         </div>
-        <p class="view-subtitle">Actionable recommendations to improve your semantic match.</p>
+        <p class="view-subtitle">Actionable, prioritized recommendations powered by ATS analysis and semantic intelligence.</p>
         <div id="aiSuggestionsContainer" class="ai-suggestions-container">
-          <!-- Populated by JS -->
-          <div class="empty-state">
-            <p>Run an analysis first to generate AI suggestions.</p>
+          <div class="empty-state" id="aiSuggestionsEmpty">
+            <div style="margin-bottom:16px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.5">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <p>Upload your resume and job description, then run analysis to unlock AI-powered suggestions.</p>
           </div>
         </div>
       </div>
