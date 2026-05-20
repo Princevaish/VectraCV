@@ -436,16 +436,18 @@ function _populateHistory(atsData) {
   const existing = list.querySelector('.empty-state') ? '' : list.innerHTML;
   
   const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const score = Math.round(atsData.score * 100);
+  const score = Math.round(atsData.ats_score || 0);
+  const semantic = Math.round((atsData.semantic_similarity || 0) * 100) / 100;
   
   const html = `
     <div class="history-item">
       <div class="history-item__main">
-        <div class="history-item__title">Software Engineer</div>
+        <div class="history-item__title">Resume Analysis</div>
         <div class="history-item__date">${date}</div>
       </div>
-      <div class="history-item__score">
-        <span class="score-badge ${score >= 75 ? 'good' : 'warning'}">${score}/100</span>
+      <div class="history-item__scores">
+        <span class="score-badge ${score >= 75 ? 'good' : 'warning'}">ATS: ${score}</span>
+        <span class="score-badge ${semantic >= 70 ? 'good' : 'warning'}">Sem: ${semantic.toFixed(0)}%</span>
       </div>
     </div>
   `;
