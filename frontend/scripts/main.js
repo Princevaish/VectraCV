@@ -9,7 +9,6 @@ import { renderATSDashboard } from './components/atsDashboard.js';
 import { initChatInterface } from './components/chatInterface.js';
 import { renderAISuggestions } from './components/aiSuggestions.js';
 import { initResumeOptimizer } from './components/resumeOptimizer.js';
-import { initResumeOptimizer } from './components/resumeOptimizer.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
