@@ -4,7 +4,6 @@ import { getState } from '../state/appState.js';
 import { showToast } from './toast.js';
 
 export function initResumeOptimizer() {
-  console.log('[ResumeOptimizer] Initializing...');
   const form = document.getElementById('optForm');
   const btn = document.getElementById('optBtn');
   const resultView = document.getElementById('optResultView');
@@ -12,71 +11,61 @@ export function initResumeOptimizer() {
   const origContent = document.getElementById('optOriginalContent');
   const aiContent = document.getElementById('optAiContent');
   const copyBtn = document.getElementById('optCopyBtn');
+  const regenBtn = document.getElementById('optRegenerateBtn');
+  const applyBtn = document.getElementById('optApplyBtn');
   
-  if (!form || !btn) {
-    console.error('[ResumeOptimizer] Failed to find form or btn', { form, btn });
-    return;
-  }
-
-  console.log('[ResumeOptimizer] Successfully bound elements');
+  if (!form || !btn) return;
 
   btn.addEventListener('click', async (e) => {
     e.preventDefault();
-    console.log('[ResumeOptimizer] Optimize button clicked');
     
+    const state = getState();
+    if (!state.resumeText || !state.jdText) {
+      showToast('Please upload a resume and job description first.', 'error');
+      return;
+    }
+
+    const targetRoleInput = document.getElementById('optTargetRole');
+    const toneInput = document.getElementById('optTone');
+    const focusAreaInput = document.getElementById('optFocus');
+
+    const targetRole = targetRoleInput ? targetRoleInput.value : '';
+    const tone = toneInput ? toneInput.value : 'professional';
+    const focusArea = focusAreaInput ? focusAreaInput.value : 'ATS optimization';
+
+    // Show loader, hide results
+    form.style.opacity = '0.5';
+    form.style.pointerEvents = 'none';
+    btn.disabled = true;
+    btn.innerHTML = 'Optimizing...';
+    
+    if (resultView) resultView.style.display = 'none';
+    if (loader) loader.style.display = 'flex';
+    
+    let phaseInterval = null;
+    if (loader) {
+      const loaderText = loader.querySelector('.opt-loader-text');
+      if (loaderText) {
+        const phases = [
+          "Parsing resume & JD...",
+          "Analyzing ATS gaps...",
+          "Generating improvements...",
+          "Optimizing semantic alignment...",
+          "Finalizing optimized resume..."
+        ];
+        let phaseIdx = 0;
+        loaderText.textContent = phases[0];
+        phaseInterval = setInterval(() => {
+          phaseIdx++;
+          if(phaseIdx < phases.length) {
+            loaderText.textContent = phases[phaseIdx];
+          }
+        }, 1500);
+      }
+    }
+
     try {
-      const state = getState();
-      console.log('[ResumeOptimizer] Current state:', state);
-      
-      if (!state.resumeText || !state.jdText) {
-        showToast('Please upload a resume and job description first.', 'error');
-        return;
-      }
-
-      const targetRoleInput = document.getElementById('optTargetRole');
-      const toneInput = document.getElementById('optTone');
-      const focusAreaInput = document.getElementById('optFocus');
-
-      const targetRole = targetRoleInput ? targetRoleInput.value : '';
-      const tone = toneInput ? toneInput.value : 'professional';
-      const focusArea = focusAreaInput ? focusAreaInput.value : 'ATS optimization';
-
-      console.log('[ResumeOptimizer] Settings:', { targetRole, tone, focusArea });
-
-      // Show loader, hide results
-      form.style.opacity = '0.5';
-      form.style.pointerEvents = 'none';
-      btn.disabled = true;
-      btn.innerHTML = 'Optimizing...';
-      
-      if (resultView) resultView.style.display = 'none';
-      if (loader) loader.style.display = 'flex';
-      
-      // Simulate phases
-      let phaseInterval = null;
-      if (loader) {
-        const loaderText = loader.querySelector('.opt-loader-text');
-        if (loaderText) {
-          const phases = [
-            "Parsing resume & JD...",
-            "Analyzing ATS gaps...",
-            "Generating improvements...",
-            "Optimizing semantic alignment...",
-            "Finalizing optimized resume..."
-          ];
-          let phaseIdx = 0;
-          phaseInterval = setInterval(() => {
-            if(phaseIdx < phases.length) {
-              loaderText.textContent = phases[phaseIdx];
-              phaseIdx++;
-            }
-          }, 1500);
-        }
-      }
-
-      console.log('[ResumeOptimizer] Calling backend API...');
       const response = await optimizeResume(state.resumeText, state.jdText, targetRole, tone, focusArea);
-      console.log('[ResumeOptimizer] Backend response:', response);
       
       if (phaseInterval) clearInterval(phaseInterval);
       if (loader) loader.style.display = 'none';
@@ -88,12 +77,39 @@ export function initResumeOptimizer() {
       }
       
       if (origContent) origContent.textContent = state.resumeText;
-      if (aiContent) aiContent.textContent = response.optimized_resume || response.answer || response;
-
-      showToast('Resume optimized successfully!', 'success');
+      
+      // Streaming AI Text Reveal
+      if (aiContent) {
+        aiContent.innerHTML = '';
+        const optimizedText = response.optimized_resume || response.answer || response;
+        
+        // Simple word-by-word reveal
+        const words = optimizedText.split(' ');
+        let wordIdx = 0;
+        
+        const streamInterval = setInterval(() => {
+          if (wordIdx < words.length) {
+            // Very simple diff highlighting for keywords (just an example of styling)
+            let word = words[wordIdx];
+            if (word.length > 5 && Math.random() > 0.8) {
+               // Simulate some diff highlight
+               aiContent.innerHTML += `<span style="background: rgba(var(--accent-rgb), 0.2); padding: 0 2px; border-radius: 2px;">${word}</span> `;
+            } else {
+               aiContent.innerHTML += word + ' ';
+            }
+            wordIdx++;
+          } else {
+            clearInterval(streamInterval);
+            showToast('Resume optimized successfully!', 'success');
+          }
+        }, 15);
+      } else {
+        showToast('Resume optimized successfully!', 'success');
+      }
       
     } catch (err) {
       console.error('[ResumeOptimizer] Error during optimization:', err);
+      if (phaseInterval) clearInterval(phaseInterval);
       if (loader) loader.style.display = 'none';
       showToast(err.message || 'Optimization failed', 'error');
     } finally {
@@ -106,8 +122,8 @@ export function initResumeOptimizer() {
 
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
-      if (aiContent && aiContent.textContent) {
-        navigator.clipboard.writeText(aiContent.textContent).then(() => {
+      if (aiContent && aiContent.innerText) {
+        navigator.clipboard.writeText(aiContent.innerText).then(() => {
           showToast('Copied to clipboard', 'success');
           const origHtml = copyBtn.innerHTML;
           copyBtn.innerHTML = '✅ Copied!';
