@@ -1,3 +1,6 @@
+// frontend/scripts/components/chatInterface.js
+// Production-grade AI chat — ChatGPT/Claude-level UX.
+
 import { analyze } from '../api/apiService.js';
 import { showToast } from './toast.js';
 import { getState } from '../state/appState.js';
@@ -7,207 +10,233 @@ let isGenerating = false;
 export function initChatInterface() {
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('chatSendBtn');
-  const messagesContainer = document.getElementById('chatMessages');
+  const msgs = document.getElementById('chatMessages');
   const chips = document.querySelectorAll('.chat-chip');
+  if (!input || !sendBtn || !msgs) return;
 
-  if (!input || !sendBtn || !messagesContainer) return;
+  // ── Force textarea interactive ──
+  forceInteractive(input);
+  renderInit();
 
-  // Render initial state
-  renderInitialState();
-
-  // Listen to state changes to enable chat
   window.addEventListener('app:stateChanged', (e) => {
-    if (e.detail?.changed?.includes('dataLoaded')) {
-      renderInitialState();
-    }
+    if (e.detail?.changed?.includes('dataLoaded')) renderInit();
   });
 
-  function renderInitialState() {
-    const state = getState();
-    messagesContainer.innerHTML = ''; // clear
-
-    if (state.dataLoaded) {
-      input.disabled = false;
-      input.placeholder = "Ask VectraAI about your resume... (Shift+Enter for newline)";
-      appendMessage("Hello! I am your AI Career Copilot. I've analyzed your resume against the job description. What would you like to know?", "ai");
+  function renderInit() {
+    const s = getState();
+    msgs.innerHTML = '';
+    if (s.dataLoaded) {
+      enableInput();
+      addMsg("Hello! I'm your AI Career Copilot. I've analyzed your resume against the job description. What would you like to know?", 'ai');
     } else {
-      input.disabled = true;
-      input.placeholder = "Context needed...";
-      
-      const div = document.createElement('div');
-      div.className = "empty-state";
-      div.innerHTML = "<p>Upload a resume and job description to start AI analysis.</p>";
-      messagesContainer.appendChild(div);
+      disableInput();
+      msgs.innerHTML = `<div class="chat-empty-state">
+        <div class="chat-empty-state__icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>AI Copilot Ready</h3>
+        <p>Upload documents and run analysis to start chatting.</p>
+      </div>`;
     }
   }
 
-  // Auto-resize textarea
-  input.addEventListener('input', () => {
+  function enableInput() {
+    input.disabled = false;
+    input.removeAttribute('disabled');
+    input.placeholder = 'Ask about your resume fit, missing skills, or ATS optimization…';
+    input.style.pointerEvents = 'auto';
+    input.style.cursor = 'text';
+    input.tabIndex = 0;
+    forceInteractive(input);
+  }
+
+  function disableInput() {
+    input.disabled = true;
+    input.placeholder = 'Run analysis first to enable AI chat…';
+    sendBtn.disabled = true;
+  }
+
+  // ── Input handling ──
+  function onInput() {
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 150) + 'px';
-    sendBtn.disabled = input.value.trim().length === 0;
-  });
+    const has = input.value.trim().length > 0;
+    sendBtn.disabled = !has || isGenerating;
+    sendBtn.classList.toggle('chat-send-btn--active', has && !isGenerating);
+  }
 
-  // Handle Enter to send (Shift+Enter for newline)
+  input.addEventListener('input', onInput);
+  input.addEventListener('keyup', onInput);
+  input.addEventListener('paste', () => requestAnimationFrame(onInput));
+
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      e.stopPropagation();
+      if (!isGenerating && input.value.trim().length > 0) doSend();
     }
   });
 
-  sendBtn.addEventListener('click', handleSend);
+  sendBtn.addEventListener('click', (e) => { e.preventDefault(); doSend(); });
 
-  // Handle suggestion chips
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
       if (isGenerating) return;
+      if (!getState().dataLoaded) { showToast('Please run analysis first.', 'info'); return; }
       input.value = chip.textContent;
-      input.dispatchEvent(new Event('input'));
-      handleSend();
+      onInput();
+      doSend();
     });
   });
 
-  async function handleSend() {
-    const state = getState();
-    if (!state.dataLoaded) {
-      showToast('Please run analysis first.', 'info');
-      return;
-    }
+  // Focus on view switch
+  const cv = document.getElementById('view-chat');
+  if (cv) {
+    new MutationObserver(() => {
+      if (cv.style.display !== 'none' && getState().dataLoaded)
+        requestAnimationFrame(() => input.focus());
+    }).observe(cv, { attributes: true, attributeFilter: ['style'] });
+  }
 
+  // ── Send ──
+  async function doSend() {
+    if (!getState().dataLoaded) { showToast('Please run analysis first.', 'info'); return; }
     const text = input.value.trim();
     if (!text || isGenerating) return;
 
-    // Reset input
     input.value = '';
     input.style.height = 'auto';
     sendBtn.disabled = true;
+    sendBtn.classList.remove('chat-send-btn--active');
 
-    // Add user message
-    appendMessage(text, 'user');
-
-    // Add loading indicator
+    addMsg(text, 'user');
     isGenerating = true;
-    const typingIndicatorId = appendTypingIndicator();
-    scrollToBottom();
+    const typing = addTyping();
+    scrollBot();
 
     try {
-      // Call backend
       const res = await analyze(text);
-      removeMessage(typingIndicatorId);
-      
-      // Stream the response
-      await streamResponse(res.answer || "I couldn't generate a response. Please try again.");
+      rmEl(typing);
+      const answer = res.answer || "I couldn't generate a response from your resume context.";
+      await streamMsg(answer);
     } catch (err) {
-      console.error(err);
-      removeMessage(typingIndicatorId);
-      appendMessage("Sorry, I encountered an error. Have you loaded a resume and job description first?", 'ai');
-      showToast('Chat analysis failed', 'error');
+      console.error('[Chat]', err);
+      rmEl(typing);
+      addMsg("Error processing request. Ensure resume & JD are uploaded.", 'ai');
+      showToast('Chat request failed', 'error');
     } finally {
       isGenerating = false;
-      scrollToBottom();
+      sendBtn.disabled = input.value.trim().length === 0;
+      input.focus();
+      scrollBot();
     }
   }
 
-  function appendMessage(text, role) {
-    const div = document.createElement('div');
-    div.className = `chat-message chat-message--${role}`;
-    
-    // Convert basic markdown
-    const formattedText = text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/```([\s\S]*?)```/g, '<code>$1</code>')
-      .replace(/\n/g, '<br>');
-
-    div.innerHTML = `
-      <div class="chat-message__avatar">
-        ${role === 'ai' 
-          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-             </svg>` 
-          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/>
-             </svg>`}
-      </div>
+  function addMsg(text, role) {
+    const d = document.createElement('div');
+    d.className = `chat-message chat-message--${role}`;
+    d.innerHTML = `
+      <div class="chat-message__avatar">${role === 'ai' ? aiSvg : userSvg}</div>
       <div class="chat-message__content">
-        <p>${formattedText}</p>
-      </div>
-    `;
+        <div class="chat-message__body">${fmtMd(text)}</div>
+        ${role === 'ai' ? copyBtn() : ''}
+      </div>`;
+    bindCopy(d, text);
+    msgs.appendChild(d);
+    if (window.gsap) gsap.fromTo(d, {opacity:0,y:12,scale:.98},{opacity:1,y:0,scale:1,duration:.35,ease:'power2.out'});
+    scrollBot();
+  }
 
-    messagesContainer.appendChild(div);
-    if (window.gsap) {
-      gsap.fromTo(div, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3 });
+  function addTyping() {
+    const d = document.createElement('div');
+    d.className = 'chat-message chat-message--ai chat-message--typing';
+    d.innerHTML = `<div class="chat-message__avatar">${aiSvg}</div>
+      <div class="chat-message__content"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+    msgs.appendChild(d);
+    return d;
+  }
+
+  function rmEl(el) {
+    if (!el?.parentNode) return;
+    if (window.gsap) gsap.to(el, {opacity:0,y:-5,duration:.2,onComplete:()=>el.remove()});
+    else el.remove();
+  }
+
+  async function streamMsg(fullText) {
+    const d = document.createElement('div');
+    d.className = 'chat-message chat-message--ai';
+    d.innerHTML = `<div class="chat-message__avatar">${aiSvg}</div>
+      <div class="chat-message__content"><div class="chat-message__body"></div><div class="chat-message__cursor"></div></div>`;
+    msgs.appendChild(d);
+    if (window.gsap) gsap.fromTo(d, {opacity:0,y:10},{opacity:1,y:0,duration:.3});
+
+    const body = d.querySelector('.chat-message__body');
+    const cur = d.querySelector('.chat-message__cursor');
+    const words = fullText.split(' ');
+    let acc = '';
+
+    for (let i = 0; i < words.length; i++) {
+      acc += (i > 0 ? ' ' : '') + words[i];
+      body.innerHTML = fmtMd(acc);
+      scrollBot();
+      let dl = 12 + Math.random() * 25;
+      if (/[.!?]$/.test(words[i])) dl += 50;
+      if (/[,:;]$/.test(words[i])) dl += 25;
+      await new Promise(r => setTimeout(r, dl));
     }
-    scrollToBottom();
+
+    if (cur) cur.remove();
+    const acts = document.createElement('div');
+    acts.className = 'chat-message__actions';
+    acts.innerHTML = copyBtn();
+    d.querySelector('.chat-message__content').appendChild(acts);
+    bindCopy(acts, fullText);
+    if (window.gsap) gsap.fromTo(acts,{opacity:0},{opacity:1,duration:.3,delay:.2});
+    scrollBot();
   }
 
-  function appendTypingIndicator() {
-    const id = 'typing-' + Date.now();
-    const div = document.createElement('div');
-    div.className = 'chat-message chat-message--ai';
-    div.id = id;
-    
-    div.innerHTML = `
-      <div class="chat-message__avatar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-        </svg>
-      </div>
-      <div class="chat-message__content" style="display:flex; align-items:center;">
-        <div class="typing-indicator">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-    `;
-    messagesContainer.appendChild(div);
-    return id;
-  }
-
-  function removeMessage(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-  }
-
-  async function streamResponse(fullText) {
-    const div = document.createElement('div');
-    div.className = 'chat-message chat-message--ai';
-    
-    div.innerHTML = `
-      <div class="chat-message__avatar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-        </svg>
-      </div>
-      <div class="chat-message__content">
-        <p></p>
-      </div>
-    `;
-    
-    messagesContainer.appendChild(div);
-    const contentEl = div.querySelector('p');
-    
-    // Simulated chunk streaming
-    const chunks = fullText.split(' ');
-    let currentText = '';
-    
-    for (let i = 0; i < chunks.length; i++) {
-      currentText += chunks[i] + ' ';
-      
-      // Basic markdown applied per chunk
-      const formattedText = currentText
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/```([\s\S]*?)```/g, '<code>$1</code>')
-        .replace(/\n/g, '<br>');
-        
-      contentEl.innerHTML = formattedText;
-      scrollToBottom();
-      
-      // Small random delay for realistic typing feel (10-40ms)
-      await new Promise(r => setTimeout(r, 10 + Math.random() * 30));
-    }
-  }
-
-  function scrollToBottom() {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  function scrollBot() {
+    requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
   }
 }
+
+function forceInteractive(ta) {
+  ta.style.pointerEvents = 'auto';
+  ta.style.userSelect = 'text';
+  ta.style.webkitUserSelect = 'text';
+  ta.style.cursor = 'text';
+  ta.style.caretColor = 'var(--ink)';
+  ta.removeAttribute('readonly');
+  let p = ta.parentElement;
+  while (p && !p.classList.contains('main-content')) { p.style.pointerEvents = 'auto'; p = p.parentElement; }
+  ta.addEventListener('mousedown', e => e.stopPropagation());
+  ta.addEventListener('click', e => { e.stopPropagation(); ta.focus(); });
+  ta.addEventListener('focus', () => { const w = ta.closest('.chat-input-wrapper'); if(w) w.classList.add('is-focused'); });
+  ta.addEventListener('blur', () => { const w = ta.closest('.chat-input-wrapper'); if(w) w.classList.remove('is-focused'); });
+}
+
+function fmtMd(t) {
+  return t.replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/^[-•]\s+(.+)/gm,'<li>$1</li>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+}
+
+function copyBtn() {
+  return `<button class="chat-action-btn" data-action="copy" title="Copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
+}
+
+function bindCopy(el, text) {
+  const btn = el.querySelector('[data-action="copy"]');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>`;
+      setTimeout(() => { btn.innerHTML = copyBtn().match(/<svg[\s\S]*<\/svg>/)[0]; }, 2000);
+    });
+  });
+}
+
+const aiSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
+const userSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>`;
