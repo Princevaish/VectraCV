@@ -7,6 +7,7 @@ import { showAuthLoader, hideAuthLoader, renderLoginCard, renderUserPill, clearU
 import { showToast } from './components/toast.js';
 import { renderATSDashboard } from './components/atsDashboard.js';
 import { initChatInterface } from './components/chatInterface.js';
+import { renderAISuggestions } from './components/aiSuggestions.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
@@ -63,36 +64,50 @@ function _bootMainApp() {
 }
 
 // ── Sidebar Navigation ──
+const VIEW_TITLES = {
+  dashboard: 'Dashboard',
+  ats: 'ATS Analysis',
+  ai: 'AI Suggestions',
+  chat: 'Chat with AI',
+  optimizer: 'Resume Optimizer',
+  history: 'History',
+  settings: 'Settings',
+};
+
 function initSidebar() {
   const navItems = document.querySelectorAll('.nav-item[data-view]');
   const views = document.querySelectorAll('.view');
+  const topbarTitle = document.getElementById('topbarTitle');
   
   navItems.forEach(btn => {
     btn.addEventListener('click', () => {
       const targetView = btn.getAttribute('data-view');
       
+      // Update topbar title
+      if (topbarTitle) topbarTitle.textContent = VIEW_TITLES[targetView] || 'Dashboard';
+
       if (targetView === 'dashboard') {
+        views.forEach(v => v.style.display = 'none');
+        document.getElementById('view-dashboard').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (targetView === 'ats') {
         const atsSection = document.getElementById('atsDashboardSection');
         if (atsSection && atsSection.style.display !== 'none') {
-           atsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          views.forEach(v => v.style.display = 'none');
+          document.getElementById('view-dashboard').style.display = 'block';
+          setTimeout(() => atsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
         } else {
-           showToast('Please upload documents and run analysis first.', 'info');
-           return;
+          showToast('Please upload documents and run analysis first.', 'info');
+          return;
         }
-      } 
-      
-      // Toggle Views (SaaS routing behavior)
-      if (['ai', 'history', 'optimizer', 'settings', 'chat'].includes(targetView)) {
+      } else if (['ai', 'history', 'optimizer', 'settings', 'chat'].includes(targetView)) {
         views.forEach(v => v.style.display = 'none');
         const viewEl = document.getElementById(`view-${targetView}`);
         if (viewEl) viewEl.style.display = 'block';
         window.scrollTo({ top: 0 });
       } else {
         views.forEach(v => v.style.display = 'none');
-        const viewEl = document.getElementById('view-dashboard');
-        if (viewEl) viewEl.style.display = 'block';
+        document.getElementById('view-dashboard').style.display = 'block';
       }
       
       navItems.forEach(i => i.classList.remove('active'));
@@ -359,9 +374,15 @@ async function _runAnalysis() {
 
     updateStep(3, 'Generating AI recommendations', 'Extracting actionable career insights...');
     
-    // Populate simple AI suggestions and History
-    if (typeof _populateAISuggestions === 'function') _populateAISuggestions(atsData);
-    if (typeof _populateHistory === 'function') _populateHistory(atsData);
+    // Store ATS data globally for cross-module access
+    window.__vectraAtsData = atsData;
+
+    // Populate AI Suggestions page
+    const sugContainer = document.getElementById('aiSuggestionsContainer');
+    if (sugContainer) renderAISuggestions(sugContainer, atsData);
+
+    // Populate History
+    _populateHistory(atsData);
 
     await new Promise(r => setTimeout(r, 700));
 
@@ -406,49 +427,7 @@ async function _runAnalysis() {
   }
 }
 
-// ── Dummy populator for views ──
-function _populateAISuggestions(atsData) {
-  const container = document.getElementById('aiSuggestionsContainer');
-  if (!container || !atsData) return;
-  
-  const skills = atsData.missing_skills || [];
-  let html = `<div class="ai-cards">`;
-  
-  if (skills.length) {
-    html += `
-      <div class="ai-card">
-        <div class="ai-card__icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
-        </div>
-        <div>
-          <h4>Missing Core Keywords</h4>
-          <p>Your resume is missing some crucial ATS keywords found in the Job Description.</p>
-          <div class="ai-card__pills">
-            ${skills.map(s => `<span class="ai-pill">${s}</span>`).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  
-  html += `
-    <div class="ai-card">
-      <div class="ai-card__icon" style="color:var(--accent2); background:rgba(var(--accent2-rgb),0.1)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-      </div>
-      <div>
-        <h4>Actionable Insight</h4>
-        <p>Consider re-writing your most recent role to focus more on quantifiable metrics rather than just responsibilities. ATS systems rank metric-driven bullet points higher.</p>
-      </div>
-    </div>
-  </div>`;
-  
-  container.innerHTML = html;
-}
+// ── History populator ──
 
 function _populateHistory(atsData) {
   const list = document.getElementById('historyList');
