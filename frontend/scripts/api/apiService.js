@@ -71,6 +71,18 @@ export async function getATSScore(resume_text, job_description) {
   });
 }
 
+// ── Optimizer endpoint ────────────────────────────────────────────────────────
+
+/**
+ * POST /api/optimize
+ */
+export async function optimizeResume(resume_text, job_description, target_role, tone, focus_area) {
+  return request('/api/optimize', {
+    method: 'POST',
+    body: JSON.stringify({ resume_text, job_description, target_role, tone, focus_area }),
+  });
+}
+
 // ── Upload endpoints (multipart) ──────────────────────────────────────────────
 
 /**
