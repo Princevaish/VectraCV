@@ -422,6 +422,87 @@
         </div>
       </div>
 
+      <!-- ── RESUME OPTIMIZER VIEW ─────────────────────────────────────── -->
+      <div id="view-optimizer" class="view" style="display:none;">
+        <div class="section-heading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          AI Resume Optimizer
+        </div>
+        <p class="view-subtitle">Generate a tailored, ATS-optimized version of your resume based on semantic intelligence.</p>
+        
+        <div class="optimizer-layout">
+          <!-- Config Panel -->
+          <div class="optimizer-config" id="optForm">
+            <h3>Optimization Settings</h3>
+            <div class="opt-form-grid">
+              <div class="opt-field">
+                <label for="optTargetRole">Target Role</label>
+                <input type="text" id="optTargetRole" placeholder="e.g. Backend Engineer, Product Manager" />
+              </div>
+              <div class="opt-field">
+                <label for="optTone">Tone</label>
+                <select id="optTone">
+                  <option value="professional">Professional (Default)</option>
+                  <option value="technical">Highly Technical</option>
+                  <option value="leadership">Leadership & Impact</option>
+                  <option value="concise">Concise & Direct</option>
+                </select>
+              </div>
+              <div class="opt-field">
+                <label for="optFocus">Focus Area</label>
+                <select id="optFocus">
+                  <option value="ATS optimization">ATS Optimization (Keywords)</option>
+                  <option value="stronger bullets">Stronger Action Verbs</option>
+                  <option value="quantified impact">Quantified Impact (Metrics)</option>
+                  <option value="recruiter readability">Recruiter Readability</option>
+                </select>
+              </div>
+            </div>
+            <div class="opt-action">
+              <button class="btn btn-primary" id="optBtn">✨ Optimize Resume</button>
+            </div>
+          </div>
+
+          <!-- Loader -->
+          <div class="opt-loader" id="optLoader" style="display: none;">
+            <div class="opt-loader-spinner"></div>
+            <div class="opt-loader-text">Initializing AI Engine...</div>
+            <div class="opt-loader-sub">Powered by Groq & ChromaDB</div>
+          </div>
+
+          <!-- Split View Results -->
+          <div class="optimizer-split" id="optResultView" style="display: none;">
+            <div class="opt-pane">
+              <div class="opt-pane-header">
+                <div class="opt-pane-title">Original Resume</div>
+              </div>
+              <div class="opt-pane-content" id="optOriginalContent"></div>
+            </div>
+            
+            <div class="opt-pane">
+              <div class="opt-pane-header">
+                <div class="opt-pane-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                    <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Optimized Version
+                </div>
+                <button class="opt-copy-btn" id="optCopyBtn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                  </svg>
+                  Copy All
+                </button>
+              </div>
+              <div class="opt-pane-content opt-pane-content--ai" id="optAiContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── HISTORY VIEW ────────────────────────────────────────────── -->
       <div id="view-history" class="view" style="display:none;">
         <div class="section-heading">

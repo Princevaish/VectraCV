@@ -9,6 +9,7 @@ import { renderATSDashboard } from './components/atsDashboard.js';
 import { initChatInterface } from './components/chatInterface.js';
 import { renderAISuggestions } from './components/aiSuggestions.js';
 import { initResumeOptimizer } from './components/resumeOptimizer.js';
+import { initResumeOptimizer } from './components/resumeOptimizer.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
@@ -58,6 +59,7 @@ function _bootMainApp() {
   initUploaders();
   initAnalysisFlow();
   initChatInterface();
+  initResumeOptimizer();
 
   if (window.gsap) {
     gsap.from('#mainContent', { opacity: 0, y: 15, duration: 0.5, ease: 'power2.out', delay: 0.2 });
