@@ -611,6 +611,12 @@
 .score-badge.good { color: var(--success); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
 .score-badge.warning { color: #f59e0b; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
 
+.history-item__scores {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .empty-state {
   padding: 48px;
   text-align: center;
