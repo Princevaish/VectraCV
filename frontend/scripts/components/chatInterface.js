@@ -14,8 +14,7 @@ export function initChatInterface() {
   const chips = document.querySelectorAll('.chat-chip');
   if (!input || !sendBtn || !msgs) return;
 
-  // ── Force textarea interactive ──
-  forceInteractive(input);
+  // ── Initialize chat ──
   renderInit();
 
   window.addEventListener('app:stateChanged', (e) => {
@@ -45,7 +44,7 @@ export function initChatInterface() {
     input.style.pointerEvents = 'auto';
     input.style.cursor = 'text';
     input.tabIndex = 0;
-    forceInteractive(input);
+    input.tabIndex = 0;
   }
 
   function disableInput() {
@@ -195,22 +194,6 @@ export function initChatInterface() {
 
   function scrollBot() {
     requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
-  }
-}
-
-function forceInteractive(ta) {
-  ta.style.pointerEvents = 'auto';
-  ta.style.userSelect = 'text';
-  ta.style.webkitUserSelect = 'text';
-  ta.style.cursor = 'text';
-  ta.style.caretColor = 'var(--ink)';
-  ta.removeAttribute('readonly');
-  let p = ta.parentElement;
-  while (p && !p.classList.contains('main-content')) { p.style.pointerEvents = 'auto'; p = p.parentElement; }
-  ta.addEventListener('mousedown', e => e.stopPropagation());
-  ta.addEventListener('click', e => { e.stopPropagation(); ta.focus(); });
-  ta.addEventListener('focus', () => { const w = ta.closest('.chat-input-wrapper'); if(w) w.classList.add('is-focused'); });
-  ta.addEventListener('blur', () => { const w = ta.closest('.chat-input-wrapper'); if(w) w.classList.remove('is-focused'); });
 }
 
 function fmtMd(t) {
