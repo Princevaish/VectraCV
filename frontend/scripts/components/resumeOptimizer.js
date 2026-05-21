@@ -20,7 +20,12 @@ export function initResumeOptimizer() {
     e.preventDefault();
     
     const state = getState();
-    if (!state.resumeText || !state.jdText) {
+    const resumeTextarea = document.getElementById('resumeTextarea');
+    const jdTextarea = document.getElementById('jdTextarea');
+    const resumeText = state.resumeText || (resumeTextarea ? resumeTextarea.value.trim() : '');
+    const jdText = state.jdText || (jdTextarea ? jdTextarea.value.trim() : '');
+
+    if (!resumeText || !jdText) {
       showToast('Please upload a resume and job description first.', 'error');
       return;
     }
@@ -65,7 +70,7 @@ export function initResumeOptimizer() {
     }
 
     try {
-      const response = await optimizeResume(state.resumeText, state.jdText, targetRole, tone, focusArea);
+      const response = await optimizeResume(resumeText, jdText, targetRole, tone, focusArea);
       
       if (phaseInterval) clearInterval(phaseInterval);
       if (loader) loader.style.display = 'none';
@@ -76,7 +81,7 @@ export function initResumeOptimizer() {
         }
       }
       
-      if (origContent) origContent.textContent = state.resumeText;
+      if (origContent) origContent.textContent = resumeText;
       
       // Streaming AI Text Reveal
       if (aiContent) {
