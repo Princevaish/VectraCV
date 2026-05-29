@@ -67,6 +67,43 @@
  
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="auth-screen" aria-label="Authentication"></div>
+
+  <!-- ANALYZE OVERLAY (Premium Semantic Loader) -->
+  <div id="analyzeOverlay" class="overlay" aria-hidden="true">
+    <div class="overlay__inner">
+      <div class="overlay__ring-wrap">
+        <svg class="overlay__ring" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="46" stroke="var(--border)" stroke-width="2"/>
+          <circle cx="50" cy="50" r="46" stroke="url(#overlayGrad)" stroke-width="3"
+                  stroke-linecap="round" stroke-dasharray="289" class="overlay__arc"/>
+          <defs>
+            <linearGradient id="overlayGrad" x1="0" y1="0" x2="100" y2="100">
+              <stop offset="0%" stop-color="var(--accent)"/>
+              <stop offset="100%" stop-color="var(--accent2)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="overlay__logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="overlay__status">
+        <h3 class="overlay__msg" id="overlayMsg">Initializing Engine</h3>
+        <p class="overlay__sub" id="overlaySub">Preparing vector models...</p>
+      </div>
+      <div class="overlay__progress-bar">
+        <div class="overlay__progress-fill" id="overlayProgressFill"></div>
+      </div>
+      <ul class="overlay__steps" id="overlaySteps">
+        <li class="overlay__step pending" data-step="1">Initializing ATS engine</li>
+        <li class="overlay__step pending" data-step="2">Computing semantic similarity</li>
+        <li class="overlay__step pending" data-step="3">Running keyword intelligence</li>
+        <li class="overlay__step pending" data-step="4">Generating AI recommendations</li>
+      </ul>
+    </div>
+  </div>
  
   <!-- ══════════════════════════════════════════════════════════
        MAIN APP SHELL
@@ -177,42 +214,7 @@
     <!-- ░░ MAIN CONTENT ░░ -->
     <main class="main-content" id="mainContent" aria-label="Main content">
  
-      <!-- ANALYZE OVERLAY (Premium Semantic Loader) -->
-      <div id="analyzeOverlay" class="overlay" aria-hidden="true">
-        <div class="overlay__inner">
-          <div class="overlay__ring-wrap">
-            <svg class="overlay__ring" viewBox="0 0 100 100" fill="none">
-              <circle cx="50" cy="50" r="46" stroke="var(--border)" stroke-width="2"/>
-              <circle cx="50" cy="50" r="46" stroke="url(#overlayGrad)" stroke-width="3"
-                      stroke-linecap="round" stroke-dasharray="289" class="overlay__arc"/>
-              <defs>
-                <linearGradient id="overlayGrad" x1="0" y1="0" x2="100" y2="100">
-                  <stop offset="0%" stop-color="var(--accent)"/>
-                  <stop offset="100%" stop-color="var(--accent2)"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div class="overlay__logo">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linejoin="round"/>
-              </svg>
-            </div>
-          </div>
-          <div class="overlay__status">
-            <h3 class="overlay__msg" id="overlayMsg">Initializing Engine</h3>
-            <p class="overlay__sub" id="overlaySub">Preparing vector models...</p>
-          </div>
-          <div class="overlay__progress-bar">
-            <div class="overlay__progress-fill" id="overlayProgressFill"></div>
-          </div>
-          <ul class="overlay__steps" id="overlaySteps">
-            <li class="overlay__step pending" data-step="1">Initializing ATS engine</li>
-            <li class="overlay__step pending" data-step="2">Computing semantic similarity</li>
-            <li class="overlay__step pending" data-step="3">Running keyword intelligence</li>
-            <li class="overlay__step pending" data-step="4">Generating AI recommendations</li>
-          </ul>
-        </div>
-      </div>
+
  
       <!-- ── DASHBOARD VIEW ──────────────────────────────────────────── -->
       <div id="view-dashboard" class="view">

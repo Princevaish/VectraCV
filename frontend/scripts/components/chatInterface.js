@@ -194,7 +194,9 @@ export function initChatInterface() {
 
   function scrollBot() {
     requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+  }
 }
+
 
 function fmtMd(t) {
   return t.replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre><code>$2</code></pre>')

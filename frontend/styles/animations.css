@@ -77,7 +77,7 @@
 /* ── OVERLAY ANIMATIONS ──────────────────────────────────────────── */
 .overlay__arc {
   animation: arcRotate 1.2s linear infinite;
-  transform-origin: 60px 60px;
+  transform-origin: 50px 50px;
 }
 
 .overlay__glow {

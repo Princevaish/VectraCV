@@ -17,26 +17,41 @@
   white-space: nowrap;
 }
 
-.btn-primary {
+.btn-primary,
+.btn.btn-primary {
   background: var(--ink);
   color: var(--bg);
+  border: 1px solid var(--ink);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.15);
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled),
+.btn.btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.2);
-  background: #000;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2), inset 0 1px 1px rgba(255,255,255,0.2);
 }
 
-[data-theme="dark"] .btn-primary:hover:not(:disabled) { background: #fff; }
+[data-theme="dark"] .btn-primary:hover:not(:disabled),
+[data-theme="dark"] .btn.btn-primary:hover:not(:disabled) {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}
 
-.btn-primary:active:not(:disabled) {
+.btn-primary:active:not(:disabled),
+.btn.btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.btn-primary:disabled {
-  opacity: 0.5;
+.btn-primary:disabled,
+.btn.btn-primary:disabled {
+  background: var(--ink-faint);
+  border-color: var(--ink-faint);
+  color: var(--ink-muted);
+  opacity: 0.6;
   cursor: not-allowed;
   box-shadow: none;
 }
