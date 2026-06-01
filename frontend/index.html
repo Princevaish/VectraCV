@@ -37,6 +37,7 @@
   <link rel="stylesheet" href="styles/animations.css" />
   <link rel="stylesheet" href="styles/ai-suggestions.css" />
   <link rel="stylesheet" href="styles/optimizer.css" />
+  <link rel="stylesheet" href="styles/product-tour.css" />
 </head>
 <body data-theme="light">
  
@@ -139,14 +140,14 @@
           <span class="nav-item__badge">New</span>
         </button>
  
-        <button class="nav-item" data-view="optimizer">
+        <button class="nav-item" data-view="optimizer" data-tour="nav-optimizer">
           <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M3 9h12M9 3l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span class="nav-item__label">Resume Optimizer</span>
         </button>
  
-        <button class="nav-item" data-view="ai">
+        <button class="nav-item" data-view="ai" data-tour="nav-ai">
           <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M9 2c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z"/>
             <path d="M9 6v3l2 2" stroke-linecap="round"/>
@@ -154,7 +155,7 @@
           <span class="nav-item__label">AI Suggestions</span>
         </button>
  
-        <button class="nav-item" data-view="chat">
+        <button class="nav-item" data-view="chat" data-tour="nav-chat">
           <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M14 11V6a2 2 0 00-2-2H4a2 2 0 00-2 2v5a2 2 0 002 2h2v3l3-3h5a2 2 0 002-2z" stroke-linejoin="round"/>
           </svg>
@@ -163,7 +164,7 @@
  
         <div class="sidebar__section-label" style="margin-top:8px;">Account</div>
  
-        <button class="nav-item" data-view="history">
+        <button class="nav-item" data-view="history" data-tour="nav-history">
           <svg class="nav-item__icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M12 2H6L2 6v8a2 2 0 002 2h10a2 2 0 002-2V6l-4-4z"/>
             <path d="M6 2v4h6V2" stroke-linecap="round"/>
@@ -220,7 +221,7 @@
       <div id="view-dashboard" class="view">
  
         <!-- Hero card -->
-        <div class="hero-card" id="heroCard">
+        <div class="hero-card" id="heroCard" data-tour="hero-card">
           <div class="hero-card__text">
             <p class="hero-card__eyebrow">AI · Semantic Analysis · ATS Intelligence</p>
             <h1 class="hero-card__title">AI Resume Intelligence<br/>Platform</h1>
@@ -251,7 +252,7 @@
         <div class="upload-grid" id="uploadGrid">
  
           <!-- Resume card -->
-          <div class="upload-card" id="resumeUploadCard" tabindex="0" aria-label="Upload resume" role="region">
+          <div class="upload-card" id="resumeUploadCard" data-tour="resume-card" tabindex="0" aria-label="Upload resume" role="region">
             <div class="upload-card__header">
               <div class="upload-card__header-left">
                 <div class="upload-card__icon upload-card__icon--resume">
@@ -315,7 +316,7 @@
           </div>
  
           <!-- Job Description card -->
-          <div class="upload-card" id="jdUploadCard" tabindex="0" aria-label="Upload job description" role="region">
+          <div class="upload-card" id="jdUploadCard" data-tour="jd-card" tabindex="0" aria-label="Upload job description" role="region">
             <div class="upload-card__header">
               <div class="upload-card__header-left">
                 <div class="upload-card__icon upload-card__icon--jd">
@@ -384,7 +385,7 @@
           <p class="analyse-cta-row__hint" id="analyseCTAHint">
             Upload both documents to run ATS analysis
           </p>
-          <button class="btn-analyze" id="runAnalysisBtn" disabled>
+          <button class="btn-analyze" id="runAnalysisBtn" data-tour="run-analysis" disabled>
             <span class="btn-analyze__bg"></span>
             <span class="btn-analyze__content">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -396,7 +397,7 @@
         </div>
  
         <!-- ATS Dashboard (rendered here after analysis) -->
-        <div id="atsDashboardSection" style="display:none;">
+        <div id="atsDashboardSection" data-tour="ats-dashboard" style="display:none;">
           <div class="section-heading">ATS Intelligence Report</div>
           <div id="atsDashboard"></div>
         </div>
@@ -522,13 +523,22 @@
 
       <!-- ── HISTORY VIEW ────────────────────────────────────────────── -->
       <div id="view-history" class="view" style="display:none;">
-        <div class="section-heading">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 8v4l3 3M22 12A10 10 0 1112 2v0a10 10 0 0110 10z" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Analysis History
+        <div class="history-header">
+          <div class="section-heading" style="margin-bottom:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 8v4l3 3M22 12A10 10 0 1112 2v0a10 10 0 0110 10z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Analysis History
+          </div>
+          <button class="btn-clear-history" id="clearHistoryBtn" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Clear All History
+          </button>
         </div>
-        <p class="view-subtitle">Your past resume optimizations.</p>
+        <p class="view-subtitle" style="margin-top: 8px;">Your past resume optimizations.</p>
         <div id="historyList" class="history-list">
           <!-- Populated by JS -->
           <div class="empty-state">

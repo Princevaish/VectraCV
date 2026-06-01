@@ -1,0 +1,206 @@
+/* frontend/styles/product-tour.css
+   Interactive Product Tour Styles for VectraAI Pro */
+
+/* Tour Overlay Backdrop */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.tour-overlay-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 15, 0.45);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  pointer-events: auto;
+}
+
+/* Spotlight Cutout */
+.tour-spotlight-rect {
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Tooltip Card (Premium Apple-style Glassmorphism) */
+.tour-tooltip {
+  position: fixed;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--glass-heavy);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.15), 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin: center;
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.tour-tooltip__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-tooltip__step-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tour-tooltip__close-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.tour-tooltip__close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .tour-tooltip__close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tour-tooltip__title {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.tour-tooltip__body {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* Progress Indicator */
+.tour-tooltip__progress-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .tour-tooltip__progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tour-tooltip__progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* Navigation Buttons */
+.tour-tooltip__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.tour-tooltip__skip-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.tour-tooltip__skip-btn:hover {
+  color: var(--ink);
+}
+
+.tour-tooltip__nav-group {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-tooltip__btn {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tour-tooltip__btn--prev {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.tour-tooltip__btn--prev:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .tour-tooltip__btn--prev:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tour-tooltip__btn--next {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.25);
+}
+
+.tour-tooltip__btn--next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.35);
+}
+
+/* Arrow pointer */
+.tour-tooltip__arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--glass-heavy);
+  transform: rotate(45deg);
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .tour-tooltip {
+    width: calc(100vw - 32px);
+    padding: 20px;
+  }
+}
