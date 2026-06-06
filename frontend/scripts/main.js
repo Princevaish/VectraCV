@@ -9,6 +9,7 @@ import { renderATSDashboard } from './components/atsDashboard.js';
 import { initChatInterface } from './components/chatInterface.js';
 import { renderAISuggestions } from './components/aiSuggestions.js';
 import { initResumeOptimizer } from './components/resumeOptimizer.js';
+import { startTour } from './components/productTour.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.gsap) gsap.registerPlugin(ScrollTrigger, TextPlugin);
@@ -59,6 +60,7 @@ function _bootMainApp() {
   initAnalysisFlow();
   initChatInterface();
   initResumeOptimizer();
+  initHowItWorks();
 
   if (window.gsap) {
     gsap.from('#mainContent', { opacity: 0, y: 15, duration: 0.5, ease: 'power2.out', delay: 0.2 });
@@ -308,6 +310,17 @@ function _checkAnalyzeButton() {
       if (ready) btn.click();
       else document.getElementById('uploadHeading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+  }
+}
+
+// ── How It Works Tour ──
+function initHowItWorks() {
+  const btn = document.getElementById('viewDocsBtn');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      startTour();
+    });
   }
 }
 
