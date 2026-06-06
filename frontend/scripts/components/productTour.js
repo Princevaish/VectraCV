@@ -146,7 +146,7 @@ function createTourDOM() {
           <rect id="tour-spotlight-cutout" class="tour-spotlight-rect" x="0" y="0" width="0" height="0" rx="10" ry="10" fill="black" />
         </mask>
       </defs>
-      <rect width="100%" height="100%" fill="rgba(10, 10, 15, 0.55)" mask="url(#tour-spotlight-mask)" style="pointer-events: auto;" />
+      <rect width="100%" height="100%" fill="rgba(10, 10, 15, 0.3)" mask="url(#tour-spotlight-mask)" style="pointer-events: auto;" />
     </svg>
   `;
   document.body.appendChild(overlayEl);
