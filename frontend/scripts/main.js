@@ -354,7 +354,7 @@ async function _runAnalysis() {
     overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
     if (window.gsap) {
-      gsap.fromTo(overlay, { opacity: 0, backdropFilter: 'blur(0px)' }, { opacity: 1, backdropFilter: 'blur(12px)', duration: 0.4 });
+      gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
       gsap.set(steps, { opacity: 0.4, x: -10, color: 'var(--ink-muted)' });
       if (progressFill) gsap.set(progressFill, { width: '0%' });
     }
