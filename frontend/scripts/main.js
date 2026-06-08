@@ -448,28 +448,287 @@ async function _runAnalysis() {
 
 // ── History populator ──
 
+const HISTORY_STORAGE_KEY = 'vectra_analysis_history';
+
+function _loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.error('Failed to parse history from localStorage', err);
+    return [];
+  }
+}
+
+function _saveHistory(history) {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (err) {
+    console.error('Failed to save history to localStorage', err);
+  }
+}
+
 function _populateHistory(atsData) {
-  const list = document.getElementById('historyList');
-  if (!list) return;
-  
-  const existing = list.querySelector('.empty-state') ? '' : list.innerHTML;
-  
   const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   const score = Math.round(atsData.ats_score || 0);
-  const semantic = Math.round((atsData.semantic_similarity || 0) * 100) / 100;
-  
-  const html = `
-    <div class="history-item">
-      <div class="history-item__main">
-        <div class="history-item__title">Resume Analysis</div>
-        <div class="history-item__date">${date}</div>
+  const semantic = Math.round((atsData.semantic_similarity || 0) * 100);
+
+  const newItem = {
+    id: Date.now().toString(),
+    date,
+    score,
+    semantic,
+    atsData
+  };
+
+  const history = _loadHistory();
+  const updated = [newItem, ...history].slice(0, 50); // limit to 50
+  _saveHistory(updated);
+
+  _renderHistoryList();
+}
+
+function initHistoryView() {
+  _initConfirmModal();
+
+  const clearBtn = document.getElementById('clearHistoryBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      _promptClearAllHistory();
+    });
+  }
+
+  // Populate initially
+  _renderHistoryList();
+}
+
+function _renderHistoryList() {
+  const list = document.getElementById('historyList');
+  const clearBtn = document.getElementById('clearHistoryBtn');
+  if (!list) return;
+
+  const history = _loadHistory();
+
+  if (history.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <p>No past analyses found.</p>
       </div>
-      <div class="history-item__scores">
-        <span class="score-badge ${score >= 75 ? 'good' : 'warning'}">ATS: ${score}</span>
-        <span class="score-badge ${semantic >= 70 ? 'good' : 'warning'}">Sem: ${semantic.toFixed(0)}%</span>
+    `;
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+
+  if (clearBtn) clearBtn.style.display = 'flex';
+
+  list.innerHTML = history.map((item, idx) => {
+    return `
+      <div class="history-item" data-id="${item.id}" data-index="${idx}" tabindex="0">
+        <div class="history-item__main">
+          <div class="history-item__title">Resume Analysis</div>
+          <div class="history-item__date">${item.date}</div>
+        </div>
+        <div class="history-item__right" style="display:flex; align-items:center; gap:16px;">
+          <div class="history-item__scores">
+            <span class="score-badge ${item.score >= 75 ? 'good' : 'warning'}">ATS: ${item.score}</span>
+            <span class="score-badge ${item.semantic >= 70 ? 'good' : 'warning'}">Sem: ${Math.round(item.semantic)}%</span>
+          </div>
+          <button class="history-item__delete-btn" aria-label="Delete history item" data-id="${item.id}" data-index="${idx}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }).join('');
+
+  // Bind clicks to history items for replay/load
+  list.querySelectorAll('.history-item').forEach(card => {
+    card.addEventListener('click', (e) => {
+      // If the delete button was clicked, don't trigger load
+      if (e.target.closest('.history-item__delete-btn')) return;
+
+      const idx = card.dataset.index;
+      _loadHistoryItem(idx);
+    });
+  });
+
+  // Bind clicks to delete buttons
+  list.querySelectorAll('.history-item__delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const idx = btn.dataset.index;
+      _promptDeleteHistoryItem(id, idx);
+    });
+  });
+}
+
+function _loadHistoryItem(index) {
+  const history = _loadHistory();
+  const item = history[index];
+  if (!item || !item.atsData) return;
+
+  // Store ATS data globally
+  window.__vectraAtsData = item.atsData;
+
+  // Render on Dashboard & Suggestions
+  const atsContainer = document.getElementById('atsDashboard');
+  if (atsContainer) {
+    renderATSDashboard(atsContainer, item.atsData);
+  }
+
+  const sugContainer = document.getElementById('aiSuggestionsContainer');
+  if (sugContainer) {
+    renderAISuggestions(sugContainer, item.atsData);
+  }
+
+  // Show the section
+  const atsSection = document.getElementById('atsDashboardSection');
+  if (atsSection) {
+    atsSection.style.display = 'block';
+  }
+
+  // Switch to dashboard view and scroll to ATS analysis
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-dashboard').style.display = 'block';
+
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const atsNav = document.querySelector('.nav-item[data-view="ats"]');
+  if(atsNav) atsNav.classList.add('active');
+
+  const topbarTitle = document.getElementById('topbarTitle');
+  if (topbarTitle) topbarTitle.textContent = 'ATS Analysis';
+
+  setTimeout(() => {
+    atsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
+
+  showToast(`Loaded analysis from ${item.date} 📊`, 'success');
+}
+
+// ── Confirmation Modal ──
+let confirmCallback = null;
+
+function _initConfirmModal() {
+  const modal = document.getElementById('confirmModalOverlay');
+  const cancelBtn = document.getElementById('confirmCancelBtn');
+  const confirmBtn = document.getElementById('confirmConfirmBtn');
+
+  if (!modal || !cancelBtn || !confirmBtn) return;
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    confirmCallback = null;
+  };
+
+  cancelBtn.addEventListener('click', closeModal);
   
-  list.innerHTML = html + existing;
+  // Close on clicking overlay background
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    if (confirmCallback) {
+      confirmCallback();
+    }
+    closeModal();
+  });
+}
+
+function _showConfirmModal(title, body, confirmText, callback) {
+  const modal = document.getElementById('confirmModalOverlay');
+  const titleEl = document.getElementById('confirmModalTitle');
+  const bodyEl = document.getElementById('confirmModalBody');
+  const confirmBtn = document.getElementById('confirmConfirmBtn');
+
+  if (!modal || !titleEl || !bodyEl || !confirmBtn) return;
+
+  titleEl.textContent = title;
+  bodyEl.textContent = body;
+  confirmBtn.textContent = confirmText;
+  confirmCallback = callback;
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function _promptDeleteHistoryItem(id, index) {
+  _showConfirmModal(
+    'Delete Analysis',
+    'Are you sure you want to delete this analysis run? This action cannot be undone.',
+    'Delete',
+    () => _deleteHistoryItem(id, index)
+  );
+}
+
+function _promptClearAllHistory() {
+  _showConfirmModal(
+    'Clear All History',
+    'Are you sure you want to clear all analysis history? This action cannot be undone.',
+    'Clear All',
+    () => _clearAllHistory()
+  );
+}
+
+function _deleteHistoryItem(id, index) {
+  const history = _loadHistory();
+  const card = document.querySelector(`.history-item[data-id="${id}"]`);
+
+  const performDelete = () => {
+    const updated = history.filter(item => item.id !== id);
+    _saveHistory(updated);
+
+    showToast('Analysis deleted from history.', 'success');
+    _renderHistoryList();
+  };
+
+  if (card && window.gsap) {
+    gsap.to(card, {
+      opacity: 0,
+      x: 30,
+      height: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      marginTop: 0,
+      marginBottom: 0,
+      borderWidth: 0,
+      duration: 0.35,
+      ease: 'power2.inOut',
+      onComplete: performDelete
+    });
+  } else {
+    performDelete();
+  }
+}
+
+function _clearAllHistory() {
+  const list = document.getElementById('historyList');
+  const cards = list ? list.querySelectorAll('.history-item') : [];
+
+  const performClear = () => {
+    _saveHistory([]);
+    showToast('All analysis history cleared.', 'success');
+    _renderHistoryList();
+  };
+
+  if (cards.length > 0 && window.gsap) {
+    gsap.to(cards, {
+      opacity: 0,
+      x: -30,
+      duration: 0.3,
+      stagger: 0.05,
+      ease: 'power2.in',
+      onComplete: performClear
+    });
+  } else {
+    performClear();
+  }
 }
