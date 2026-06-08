@@ -606,6 +606,18 @@
   <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"
        role="region" aria-live="assertive" aria-label="Notifications"></div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="confirm-modal-overlay" id="confirmModalOverlay" aria-hidden="true" role="dialog" aria-labelledby="confirmModalTitle">
+    <div class="confirm-modal-card">
+      <h3 class="confirm-modal-title" id="confirmModalTitle">Delete History Item</h3>
+      <p class="confirm-modal-body" id="confirmModalBody">Are you sure you want to delete this analysis history item? This action cannot be undone.</p>
+      <div class="confirm-modal-actions">
+        <button class="confirm-modal-btn confirm-modal-btn--cancel" id="confirmCancelBtn">Cancel</button>
+        <button class="confirm-modal-btn confirm-modal-btn--confirm" id="confirmConfirmBtn">Delete</button>
+      </div>
+    </div>
+  </div>
  
   <!-- ES Modules -->
   <script type="module" src="scripts/main.js"></script>

@@ -61,6 +61,7 @@ function _bootMainApp() {
   initChatInterface();
   initResumeOptimizer();
   initHowItWorks();
+  initHistoryView();
 
   if (window.gsap) {
     gsap.from('#mainContent', { opacity: 0, y: 15, duration: 0.5, ease: 'power2.out', delay: 0.2 });
@@ -109,6 +110,9 @@ function initSidebar() {
         const viewEl = document.getElementById(`view-${targetView}`);
         if (viewEl) viewEl.style.display = 'block';
         window.scrollTo({ top: 0 });
+        if (targetView === 'history') {
+          _renderHistoryList();
+        }
       } else {
         views.forEach(v => v.style.display = 'none');
         document.getElementById('view-dashboard').style.display = 'block';
