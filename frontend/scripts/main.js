@@ -143,6 +143,10 @@ function initTheme() {
     syncIcon();
     if (window.gsap) gsap.from(btn, { rotation: 90, duration: 0.4, ease: 'back.out(1.5)' });
   });
+
+  window.addEventListener('app:themeChanged', () => {
+    syncIcon();
+  });
 }
 
 // ── Upload Handlers ──
