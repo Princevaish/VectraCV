@@ -21,6 +21,10 @@ export function initChatInterface() {
     if (e.detail?.changed?.includes('dataLoaded')) renderInit();
   });
 
+  window.addEventListener('app:clearChat', () => {
+    renderInit();
+  });
+
   function renderInit() {
     const s = getState();
     msgs.innerHTML = '';
