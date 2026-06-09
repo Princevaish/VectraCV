@@ -134,6 +134,20 @@ export async function getUploadStatus() {
   return request('/api/upload/status', { method: 'GET' }, 0);
 }
 
+/**
+ * GET /api/ats-health
+ */
+export async function pingATS() {
+  return request('/api/ats-health', { method: 'GET' }, 0);
+}
+
+/**
+ * GET /api/stats
+ */
+export async function getStats() {
+  return request('/api/stats', { method: 'GET' }, 0);
+}
+
 // ── Error class ───────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
