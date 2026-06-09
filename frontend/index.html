@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="styles/ai-suggestions.css" />
   <link rel="stylesheet" href="styles/optimizer.css" />
   <link rel="stylesheet" href="styles/product-tour.css" />
+  <link rel="stylesheet" href="styles/settings.css" />
 </head>
 <body data-theme="light">
  
@@ -597,7 +598,192 @@
 
       <!-- ── PLACEHOLDER VIEWS ───────────────────────────────────────── -->
       <div id="view-ats"       class="view" style="display:none;"></div>
-      <div id="view-settings"  class="view" style="display:none;"></div>
+      <div id="view-settings" class="view" style="display:none;">
+        <div class="settings-header">
+          <div class="section-heading" style="margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            System Settings
+          </div>
+          <p class="view-subtitle" style="margin-top: 8px; margin-bottom: 24px;">Configure your theme, AI preferences, and data privacy options.</p>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Card 1: Appearance -->
+          <div class="settings-card" id="settingsCardAppearance">
+            <div class="settings-card__header">
+              <h3 class="settings-card__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                  <circle cx="12" cy="12" r="4"></circle>
+                </svg>
+                Appearance
+              </h3>
+              <p class="settings-card__subtitle">Customize the look and feel of your interface.</p>
+            </div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Dark Mode</span>
+                  <span class="settings-row__desc">Switch between light and dark themes.</span>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="settingsDarkModeToggle">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Animations</span>
+                  <span class="settings-row__desc">Enable layout transitions and visual effects.</span>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="settingsAnimationsToggle" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: AI Preferences -->
+          <div class="settings-card" id="settingsCardAI">
+            <div class="settings-card__header">
+              <h3 class="settings-card__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                AI Preferences
+              </h3>
+              <p class="settings-card__subtitle">Tune the parameters for LLM response generation.</p>
+            </div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Response Length</span>
+                  <span class="settings-row__desc">Select preferred verbosity for AI suggestions.</span>
+                </div>
+                <select class="select-control" id="settingsResponseLength">
+                  <option value="short">Short</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="detailed">Detailed</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Streaming Responses</span>
+                  <span class="settings-row__desc">Render words as they are generated in real-time.</span>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="settingsStreamingToggle" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: System Status -->
+          <div class="settings-card" id="settingsCardStatus">
+            <div class="settings-card__header">
+              <h3 class="settings-card__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                  <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                  <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+                System Status
+              </h3>
+              <p class="settings-card__subtitle">Check real-time network and service availability.</p>
+            </div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Backend API</span>
+                  <span class="settings-row__desc">VectraAI intelligence service.</span>
+                </div>
+                <div class="status-indicator status-indicator--active" id="statusBackend">
+                  <span class="status-dot"></span>
+                  <span class="status-text">Active</span>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">ChromaDB Vector Store</span>
+                  <span class="settings-row__desc">Semantic search vector database.</span>
+                </div>
+                <div class="status-indicator status-indicator--active" id="statusVectorDb">
+                  <span class="status-dot"></span>
+                  <span class="status-text">Active</span>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">AI Language Model</span>
+                  <span class="settings-row__desc">Primary model used for optimization.</span>
+                </div>
+                <span class="status-text" id="statusModelInfo">GPT-4o (Default)</span>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">API Connection</span>
+                  <span class="settings-row__desc">Local system network connection.</span>
+                </div>
+                <div class="status-indicator status-indicator--active" id="statusConnection">
+                  <span class="status-dot"></span>
+                  <span class="status-text">Online</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Data & Privacy -->
+          <div class="settings-card" id="settingsCardData">
+            <div class="settings-card__header">
+              <h3 class="settings-card__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Data & Privacy
+              </h3>
+              <p class="settings-card__subtitle">Manage stored documents, chats, and runs.</p>
+            </div>
+            <div class="settings-group" style="gap: 16px;">
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Clear Chat History</span>
+                  <span class="settings-row__desc">Erase all message logs with the Copilot.</span>
+                </div>
+                <button class="settings-btn settings-btn--danger" id="settingsClearChatBtn">
+                  Clear Chat
+                </button>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Clear Analysis History</span>
+                  <span class="settings-row__desc">Erase all past ATS score history logs.</span>
+                </div>
+                <button class="settings-btn settings-btn--danger" id="settingsClearHistoryBtn">
+                  Clear Runs
+                </button>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row__info">
+                  <span class="settings-row__label">Reset Upload Context</span>
+                  <span class="settings-row__desc">Erase uploaded resume and JD content.</span>
+                </div>
+                <button class="settings-btn settings-btn--danger" id="settingsClearContextBtn">
+                  Reset Context
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
  
     </main><!-- /main-content -->
  
