@@ -736,3 +736,47 @@ function _clearAllHistory() {
     performClear();
   }
 }
+
+function _resetUploadContext() {
+  const resumeTextarea = document.getElementById('resumeTextarea');
+  const jdTextarea = document.getElementById('jdTextarea');
+  if (resumeTextarea) resumeTextarea.value = '';
+  if (jdTextarea) jdTextarea.value = '';
+
+  const resumeWordCount = document.getElementById('resumeWordCount');
+  const jdWordCount = document.getElementById('jdWordCount');
+  if (resumeWordCount) resumeWordCount.textContent = '0 words';
+  if (jdWordCount) jdWordCount.textContent = '0 words';
+
+  const resumeCard = document.getElementById('resumeUploadCard');
+  const jdCard = document.getElementById('jdUploadCard');
+  if (resumeCard) resumeCard.classList.remove('is-loaded', 'is-uploading', 'is-error');
+  if (jdCard) jdCard.classList.remove('is-loaded', 'is-uploading', 'is-error');
+
+  _checkAnalyzeButton();
+
+  setState({ dataLoaded: false, resumeText: '', jdText: '' });
+  window.__vectraAtsData = null;
+
+  const atsSection = document.getElementById('atsDashboardSection');
+  if (atsSection) atsSection.style.display = 'none';
+
+  const sugContainer = document.getElementById('aiSuggestionsContainer');
+  if (sugContainer) {
+    sugContainer.innerHTML = `
+      <div class="empty-state">
+        <p>No suggestions available. Run an analysis first.</p>
+      </div>
+    `;
+  }
+
+  showToast('Upload context and active session reset.', 'success');
+}
+
+window.addEventListener('app:clearAllHistory', () => {
+  _clearAllHistory();
+});
+
+window.addEventListener('app:resetContext', () => {
+  _resetUploadContext();
+});
