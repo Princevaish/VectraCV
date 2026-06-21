@@ -97,7 +97,7 @@ export function truncate(text, maxLen = 60) {
  * @param {any} detail
  */
 export function emit(name, detail) {
-  document.dispatchEvent(new CustomEvent(name, { detail }));
+  window.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
 /**
@@ -106,5 +106,5 @@ export function emit(name, detail) {
  * @param {Function} handler
  */
 export function on(name, handler) {
-  document.addEventListener(name, handler);
+  window.addEventListener(name, handler);
 }
