@@ -83,7 +83,7 @@ export function transitionToApp() {
   if (window.gsap) {
     gsap.fromTo(app,
       { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out' }
+      { opacity: 1, y: 0, duration: 0.42, ease: 'power3.out', clearProps: 'transform' }
     );
   }
 
