@@ -477,7 +477,7 @@ function _saveHistory(history) {
 function _populateHistory(atsData) {
   const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   const score = Math.round(atsData.ats_score || 0);
-  const semantic = Math.round((atsData.semantic_similarity || 0) * 100);
+  const semantic = Math.round((atsData.semantic_similarity || 0) * 100) / 100;
 
   const newItem = {
     id: Date.now().toString(),
@@ -529,6 +529,10 @@ function _renderHistoryList() {
   if (clearBtn) clearBtn.style.display = 'flex';
 
   list.innerHTML = history.map((item, idx) => {
+    let semVal = item.semantic ?? 0;
+    if (semVal > 100) {
+      semVal = semVal / 100;
+    }
     return `
       <div class="history-item" data-id="${item.id}" data-index="${idx}" tabindex="0">
         <div class="history-item__main">
@@ -538,7 +542,7 @@ function _renderHistoryList() {
         <div class="history-item__right" style="display:flex; align-items:center; gap:16px;">
           <div class="history-item__scores">
             <span class="score-badge ${item.score >= 75 ? 'good' : 'warning'}">ATS: ${item.score}</span>
-            <span class="score-badge ${item.semantic >= 70 ? 'good' : 'warning'}">Sem: ${Math.round(item.semantic)}%</span>
+            <span class="score-badge ${semVal >= 70 ? 'good' : 'warning'}">Sem: ${semVal.toFixed(2)}%</span>
           </div>
           <button class="history-item__delete-btn" aria-label="Delete history item" data-id="${item.id}" data-index="${idx}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
